@@ -52,6 +52,9 @@ def _session_env(
     with session_tmp_env(
         "conda",
         "conda-self",
+        # Pin libmambapy <2.6 to work around a broken pybind11-abi==11
+        # variant on Windows. See conda-forge/mamba-feedstock#384.
+        "libmambapy <2.6",
         f"python={python_ver}",
         f"--channel={channel}",
     ) as prefix:
