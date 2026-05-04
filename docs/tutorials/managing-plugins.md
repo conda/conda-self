@@ -5,7 +5,7 @@ protected base environment: installing, updating, and removing them.
 
 ## Prerequisites
 
-- conda-self installed in base (included by default in conda 26.1.1+)
+- conda-self installed in base (`conda install -n base conda-self`)
 - Base environment protected (see {doc}`protecting-base`)
 
 ## Install a plugin

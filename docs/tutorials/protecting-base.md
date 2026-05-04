@@ -5,7 +5,7 @@ from scratch and understanding what happens at each step.
 
 ## Before you start
 
-Verify conda-self is available (included by default in conda 26.1.1+):
+Verify conda-self is available (install with `conda install -n base conda-self`):
 
 ```bash
 conda self --version

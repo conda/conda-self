@@ -5,7 +5,8 @@ managing plugins with conda-self.
 
 ## Prerequisites
 
-- conda 26.1.1 or later (conda-self is included as a default plugin)
+- conda 26.1.1 or later
+- conda-self installed in base (`conda install -n base conda-self`)
 
 ## Protect your base environment
 
