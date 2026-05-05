@@ -58,6 +58,9 @@ def _session_env(
         f"python={python_ver}",
         f"--channel={channel}",
     ) as prefix:
+        # Persist the pin so `conda self update` respects it too.
+        pinned = prefix / "conda-meta" / "pinned"
+        pinned.write_text("libmambapy <2.6\n")
         yield prefix
 
 
