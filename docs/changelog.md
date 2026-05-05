@@ -1,6 +1,5 @@
 # Changelog
 
-## Unreleased
-
-- Added comprehensive documentation with Diataxis structure
-- Added VHS terminal demos
+```{include} ../CHANGELOG.md
+:start-after: "[//]: # (current developments)"
+```
