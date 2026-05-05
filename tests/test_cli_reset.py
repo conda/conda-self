@@ -385,7 +385,11 @@ def test_reset_base_protection(
         f"python={python_version}",
         "conda-self",
         "conda-index",
+        # Pin libmambapy <2.6 to work around a broken pybind11-abi==11
+        # variant on Windows. See conda-forge/mamba-feedstock#384.
+        "libmambapy <2.6",
     ) as prefix:
+        (prefix / "conda-meta" / "pinned").write_text("libmambapy <2.6\n")
         frozen_file = prefix / PREFIX_FROZEN_FILE
         protection_state = prefix / "conda-meta" / RESET_FILE_BASE_PROTECTION
 
