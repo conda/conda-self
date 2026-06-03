@@ -91,12 +91,12 @@ def test_install_plugin(
 ):
     monkeypatch.setenv("CONDA_CHANNELS", conda_channel)
 
-    assert not is_installed(base_env, "conda-index")
+    assert not is_installed(base_env, "conda-build")
     conda_cli_subprocess(
         base_env,
         "self",
         "install",
         "--yes",
-        "conda-index",
+        "conda-build",
     )
-    assert is_installed(base_env, "conda-index")
+    assert is_installed(base_env, "conda-build")

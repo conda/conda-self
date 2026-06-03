@@ -14,6 +14,21 @@ if TYPE_CHECKING:
     from pytest import MonkeyPatch
 
 
+@pytest.fixture
+def stub_uninstall_specs(monkeypatch: MonkeyPatch) -> list[list[str]]:
+    calls: list[list[str]] = []
+
+    def uninstall_specs(specs: list[str], json: bool = False, yes: bool = True) -> int:
+        calls.append(specs)
+        return 0
+
+    monkeypatch.setattr(
+        "conda_self.install.uninstall_specs_in_protected_env",
+        uninstall_specs,
+    )
+    return calls
+
+
 def test_help(conda_cli: CondaCLIFixture) -> None:
     out, err, exc = conda_cli("self", "remove", "--help", raises=SystemExit)
     assert exc.value.code == 0
@@ -37,6 +52,7 @@ def test_remove_validation(
     spec: str,
     force: bool,
     raises: type[Exception] | None,
+    stub_uninstall_specs: list[list[str]],
 ) -> None:
     """Validation guard for permanent specs, overridden by ``--force``."""
     argv = ["self", "remove", "--yes", spec]
@@ -45,8 +61,10 @@ def test_remove_validation(
 
     if raises is not None:
         conda_cli(*argv, raises=raises)
+        assert stub_uninstall_specs == []
     else:
         conda_cli(*argv)
+        assert stub_uninstall_specs == [[spec]]
 
 
 @pytest.mark.parametrize(
@@ -62,10 +80,12 @@ def test_force_warning_message(
     conda_cli: CondaCLIFixture,
     spec: str,
     expect_warning: bool,
+    stub_uninstall_specs: list[list[str]],
 ) -> None:
     """``--force`` warns to stderr only when overriding permanent specs."""
     _out, err, _exc = conda_cli("self", "remove", "--yes", "--force", spec)
     assert ("Warning" in err and spec in err and "--force" in err) is expect_warning
+    assert stub_uninstall_specs == [[spec]]
 
 
 def test_remove_nonessential_plugin(
@@ -76,13 +96,13 @@ def test_remove_nonessential_plugin(
 ) -> None:
     monkeypatch.setenv("CONDA_CHANNELS", conda_channel)
 
-    conda_cli("install", "conda-index", "--yes", "--prefix", base_env)
-    assert is_installed(base_env, "conda-index")
+    conda_cli("install", "conda-build", "--yes", "--prefix", base_env)
+    assert is_installed(base_env, "conda-build")
     conda_cli_subprocess(
         base_env,
         "self",
         "remove",
         "--yes",
-        "conda-index",
+        "conda-build",
     )
-    assert not is_installed(base_env, "conda-index")
+    assert not is_installed(base_env, "conda-build")

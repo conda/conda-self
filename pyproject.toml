@@ -85,9 +85,6 @@ cmd = """bash -c 'if [ -n "$1" ]; then vhs "demos/$1.tape"; else for tape in dem
 args = [{ arg = "name", default = "" }]
 description = "Record demo GIFs"
 
-[tool.pixi.pypi-dependencies]
-"conda-self" = { path  = ".", editable = true }
-
 [tool.pixi.feature.build]
 dependencies = { conda-build = "*", anaconda-client = "*" }
 tasks = { build = "conda build recipe" }
@@ -110,12 +107,16 @@ sphinx-copybutton = "*"
 sphinx-design = "*"
 
 [tool.pixi.feature.test.tasks]
-test = 'python -m pytest'
+install-self = { cmd = "python -m conda pypi install -e .", env = { CONDA_SOLVER = "libmamba" } }
+test = { cmd = "python -m pytest", depends-on = ["install-self"], env = { CONDA_SOLVER = "libmamba" } }
 pre-commit = 'pre-commit'
 lint = 'pre-commit'
 
 [tool.pixi.feature.test]
 [tool.pixi.feature.test.dependencies]
+conda-pypi = "*"
+hatch-vcs = ">=0.2.0"
+hatchling = ">=1.12.2"
 pytest = "*"
 pytest-mock = "*"
 pre-commit = "*"
