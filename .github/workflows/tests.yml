@@ -35,6 +35,8 @@ jobs:
   tests:
     name: ${{ matrix.os }}, py${{ matrix.python-version }}, ${{ matrix.channel }}
     runs-on: ${{ matrix.os }}
+    env:
+      TEST_CONDA_CHANNEL: ${{ matrix.channel }}
     strategy:
       fail-fast: false
       matrix:
@@ -61,8 +63,6 @@ jobs:
       - name: Show conda info
         run: pixi run --environment test-py${{ matrix.python-version }} python -m conda info
       - name: Run tests
-        env:
-          TEST_CONDA_CHANNEL: ${{ matrix.channel }}
         run: >
           pixi run
           --environment test-py${{ matrix.python-version }}

@@ -115,6 +115,7 @@ lint = 'pre-commit'
 [tool.pixi.feature.test]
 [tool.pixi.feature.test.dependencies]
 conda-pypi = "*"
+editables = "*"
 hatch-vcs = ">=0.2.0"
 hatchling = ">=1.12.2"
 pytest = "*"
