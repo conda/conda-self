@@ -18,6 +18,13 @@ if TYPE_CHECKING:
     from conda.plugins.types import ConfirmCallback
 
 
+BASE_PROTECTION_FROZEN_MESSAGE = """\
+Your base environment is protected from direct modifications.
+
+To manage conda and its plugins, use conda self:
+  conda self --help"""
+
+
 def is_base_environment(prefix: str) -> bool:
     """Check if the given prefix is the base environment."""
     return prefix == sys.prefix
@@ -80,7 +87,7 @@ def fix(prefix: str, args: Namespace, confirm: ConfirmCallback) -> int:
     from ..reset import names_from_explicit, reset
 
     default_env = DEFAULT_ENV_NAME
-    message = "Protected by Base Environment Protection health fix"
+    message = BASE_PROTECTION_FROZEN_MESSAGE
 
     base_prefix = Path(sys.prefix)
 
