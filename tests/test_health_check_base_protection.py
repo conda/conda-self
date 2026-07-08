@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from argparse import Namespace
 from typing import TYPE_CHECKING
@@ -9,7 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 from conda.base.constants import PREFIX_FROZEN_FILE
 from conda.core.prefix_data import PrefixData
-from conda.exceptions import CondaValueError
+from conda.exceptions import CondaValueError, EnvironmentIsFrozenError
 
 from conda_self.constants import RESET_FILE_INSTALLER
 from conda_self.health_checks import base_protection
@@ -258,6 +259,18 @@ def test_fix_reset_strategy(
     assert "snapshot" not in reset_calls[0]
     assert expected_keep <= reset_calls[0]["uninstallable_packages"]
     assert len(perm_deps_calls) == 1
+
+
+def test_fix_writes_actionable_frozen_message(fixable_base_env: Path):
+    base_protection.fix(str(fixable_base_env), Namespace(), lambda msg: None)
+
+    frozen_file = fixable_base_env / PREFIX_FROZEN_FILE
+    frozen_message = json.loads(frozen_file.read_text())["message"]
+    rendered_error = str(EnvironmentIsFrozenError(fixable_base_env, frozen_message))
+
+    assert frozen_message == base_protection.BASE_PROTECTION_FROZEN_MESSAGE
+    assert "conda self --help" in rendered_error
+    assert "--override-frozen" in rendered_error
 
 
 def test_health_check_registered():
