@@ -16,6 +16,8 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     from .main_remove import configure_parser as configure_parser_remove
     from .main_reset import HELP as RESET_HELP
     from .main_reset import configure_parser as configure_parser_reset
+    from .main_uninstall import HELP as UNINSTALL_HELP
+    from .main_uninstall import configure_parser as configure_parser_uninstall
     from .main_update import HELP as UPDATE_HELP
     from .main_update import configure_parser as configure_parser_update
 
@@ -35,6 +37,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     configure_parser_install(subparsers.add_parser("install", help=INSTALL_HELP))
     configure_parser_remove(subparsers.add_parser("remove", help=REMOVE_HELP))
     configure_parser_reset(subparsers.add_parser("reset", help=RESET_HELP))
+    configure_parser_uninstall(subparsers.add_parser("uninstall", help=UNINSTALL_HELP))
     configure_parser_update(subparsers.add_parser("update", help=UPDATE_HELP))
     parser.set_defaults(func=partial(parser.parse_args, ["--help"]))
 

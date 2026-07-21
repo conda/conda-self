@@ -34,3 +34,31 @@ class NoDistInfoDirFound(CondaError):
         super().__init__(
             f"No *.dist-info directories found for '{package_name}' in '{path}'."
         )
+
+
+class InstallerAdapterError(CondaError):
+    """Base class for installer adapter errors."""
+
+
+class InvalidInstallerAdapterError(InstallerAdapterError):
+    def __init__(self, adapter: object):
+        super().__init__(
+            "conda_self_adapters() must yield CondaSelfAdapter objects, "
+            f"got {adapter!r}"
+        )
+
+
+class MultipleInstallerAdaptersError(InstallerAdapterError):
+    def __init__(self, prefix: Path, names: list[str]):
+        super().__init__(
+            f"Multiple installer adapters claim '{prefix}': {', '.join(names)}"
+        )
+
+
+class InstallerOperationUnsupportedError(InstallerAdapterError):
+    def __init__(self, operation: str, prefix: Path):
+        super().__init__(
+            f"The conda installation at '{prefix}' does not provide "
+            f"installer-owned {operation} support. Use the installer or package "
+            "manager that installed this conda distribution."
+        )

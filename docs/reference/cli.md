@@ -74,15 +74,17 @@ conda self remove conda-index
 
 ## self update
 
-Update conda and its plugins in the base environment.
+Update the conda installation or its plugins.
 
 ```
-conda self update [<specs>...] [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
+conda self update [--plugin <name> | --all] [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
 ```
 
-`specs`
-: Optional package names to update. If omitted, updates all plugins
-  and conda itself.
+`--plugin`
+: Update one installed conda plugin together with conda.
+
+`--all`
+: Update conda, all installed conda plugins, and dependencies.
 
 `--force-reinstall`
 : Force reinstall of all packages.
@@ -94,19 +96,38 @@ conda self update [<specs>...] [--force-reinstall] [--dry-run] [--yes] [--json] 
 : Skip confirmation prompts.
 
 ```bash
-# Update everything
+# Update the installation
 conda self update
 
-# Update specific packages
-conda self update conda
+# Update one plugin
+conda self update --plugin conda-index
 
-# Force reinstall all
+# Update all plugins and dependencies
+conda self update --all
+
+# Force reinstall
 conda self update --force-reinstall
 ```
 
-The update command uses `--update-specs` by default and `--all` when
-`--force-reinstall` is specified. It lets the solver find the latest
-compatible versions rather than pinning to specific version numbers.
+A distribution-provided [installer adapter](installer-adapters) may handle a
+bare `conda self update` when it owns the launcher. Without one, the command
+updates the `conda` package in base as before. Explicit `--plugin` and `--all`
+operations always use conda package management.
+
+---
+
+## self uninstall
+
+Ask the installer that owns this conda distribution to uninstall it.
+
+```
+conda self uninstall [--dry-run] [--yes] [--json] [--quiet]
+```
+
+The command delegates to a distribution-provided
+[installer adapter](installer-adapters). The adapter owns confirmation,
+cleanup, and any package-manager guidance. conda-self refuses the operation
+when no adapter provides uninstall support.
 
 ---
 

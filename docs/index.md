@@ -113,6 +113,7 @@ guides/custom-channels
 :caption: Reference
 
 reference/cli
+reference/installer-adapters
 configuration
 ```
 

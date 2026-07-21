@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 from conda.exceptions import CondaValueError
 
+from conda_self.models import CondaSelfAdapter
 from conda_self.testing import conda_cli_subprocess
 
 if TYPE_CHECKING:
@@ -21,6 +22,30 @@ def test_help(conda_cli: CondaCLIFixture):
 
 def test_update_plugin_invalid(conda_cli: CondaCLIFixture):
     conda_cli("self", "update", "--plugin", "conda-fake-solver", raises=CondaValueError)
+
+
+def test_bare_update_dispatches_to_installer_adapter(
+    conda_cli: CondaCLIFixture,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    requests = []
+
+    def update_launcher(request) -> int:
+        requests.append(request)
+        return 0
+
+    adapter = CondaSelfAdapter(name="test", update_launcher=update_launcher)
+    monkeypatch.setattr("conda_self.registry.get_adapter", lambda prefix: adapter)
+
+    conda_cli("self", "update", "--force-reinstall", "--dry-run", "--yes", "--quiet")
+
+    assert len(requests) == 1
+    request = requests[0]
+    assert request.prefix.is_absolute()
+    assert request.force_reinstall is True
+    assert request.dry_run is True
+    assert request.yes is True
+    assert request.quiet is True
 
 
 @pytest.mark.parametrize(

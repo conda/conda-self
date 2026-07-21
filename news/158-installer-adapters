@@ -1,0 +1,19 @@
+### Enhancements
+
+* Add a private Pluggy adapter interface for installer-owned uninstall and launcher updates. (#158)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* Document installer adapter discovery and the `conda self uninstall` command. (#158)
+
+### Other
+
+* <news item>

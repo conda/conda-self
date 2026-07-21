@@ -33,11 +33,15 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
 
 
 def execute(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
     from conda.base.context import context
     from conda.core.prefix_data import PrefixData
     from conda.exceptions import PackageNotInstalledError
 
     from ..install import install_specs_in_protected_env
+    from ..models import LauncherUpdateRequest
+    from ..registry import get_adapter
     from ..validate import conda_plugin_packages, validate_plugin_is_installed
 
     if args.plugin:
@@ -46,6 +50,19 @@ def execute(args: argparse.Namespace) -> int:
     elif args.all:
         package_names = ["conda", *conda_plugin_packages()]
     else:
+        prefix = Path(context.root_prefix)
+        adapter = get_adapter(prefix)
+        if adapter is not None and adapter.update_launcher is not None:
+            return adapter.update_launcher(
+                LauncherUpdateRequest(
+                    prefix=prefix,
+                    force_reinstall=args.force_reinstall,
+                    dry_run=context.dry_run or bool(args.dry_run),
+                    yes=context.always_yes or bool(args.yes),
+                    json=context.json or bool(args.json),
+                    quiet=context.quiet or bool(args.quiet),
+                )
+            )
         package_names = ["conda"]
 
     prefix_data = PrefixData(context.root_prefix)
