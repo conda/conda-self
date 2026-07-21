@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add a private Pluggy adapter interface for installer-owned uninstall and launcher updates. (#158)
+* Add a private Pluggy interface that lets distribution packages implement `conda self uninstall` and handle bare `conda self update`. (#158)
 
 ### Bug fixes
 

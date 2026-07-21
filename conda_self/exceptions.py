@@ -58,7 +58,6 @@ class MultipleInstallerAdaptersError(InstallerAdapterError):
 class InstallerOperationUnsupportedError(InstallerAdapterError):
     def __init__(self, operation: str, prefix: Path):
         super().__init__(
-            f"The conda installation at '{prefix}' does not provide "
-            f"installer-owned {operation} support. Use the installer or package "
-            "manager that installed this conda distribution."
+            f"Cannot {operation} the conda installation at '{prefix}'. "
+            "Use the installer or package manager that installed it."
         )

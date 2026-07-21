@@ -1,16 +1,13 @@
 # Installer adapters
 
-Some `conda self` operations depend on how the conda distribution was
-installed. Removing a Constructor installation, updating a standalone
-launcher, and updating an installation owned by a system package manager
-require different policy.
+Some `conda self` commands must use the installer that created the root prefix.
+Constructor, standalone, and system-package-manager installations cannot all be
+updated or removed the same way.
 
-conda-self discovers that policy through its private `conda_self` Pluggy
-entry-point group. Distribution packages can provide one adapter for a root
-prefix. The adapter can implement uninstall, launcher update, or both.
-
-This is separate from conda's plugin API. It is loaded only for operations
-that may belong to an installer adapter.
+conda-self loads providers from its private `conda_self` Pluggy entry-point
+group. A provider yields an adapter when it recognizes the root prefix. The
+adapter can implement uninstall, launcher update, or both. This interface does
+not use conda's plugin API.
 
 ## Provider entry point
 
@@ -52,15 +49,15 @@ multiple adapters claim the same installation.
 
 ## Operations
 
-`uninstall` receives an `UninstallRequest`. The adapter owns the removal plan,
-confirmation, cleanup, and any package-manager guidance. If no applicable
-adapter implements it, `conda self uninstall` refuses to guess how to remove
-the installation.
+`uninstall` receives an `UninstallRequest`. Its callback decides what to remove,
+handles confirmation and cleanup, and can print package-manager instructions.
+If no applicable adapter provides the callback, `conda self uninstall` exits
+without removing the installation.
 
-`update_launcher` receives a `LauncherUpdateRequest`. When present, it handles
-a bare `conda self update`. An externally managed adapter can refuse the update
-and show the exact command for the owning package manager. An adapter for a
-standalone installation can update its launcher.
+`update_launcher` receives a `LauncherUpdateRequest` and handles a bare
+`conda self update`. A package-manager adapter can reject the update and print
+the command users should run instead. A standalone adapter can replace its
+launcher.
 
 Explicit package operations do not call `update_launcher`:
 

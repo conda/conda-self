@@ -118,16 +118,15 @@ operations always use conda package management.
 
 ## self uninstall
 
-Ask the installer that owns this conda distribution to uninstall it.
+Uninstall the conda installation through its installer or package manager.
 
 ```
 conda self uninstall [--dry-run] [--yes] [--json] [--quiet]
 ```
 
-The command delegates to a distribution-provided
-[installer adapter](installer-adapters). The adapter owns confirmation,
-cleanup, and any package-manager guidance. conda-self refuses the operation
-when no adapter provides uninstall support.
+An [installer adapter](installer-adapters) handles confirmation, cleanup, and
+package-manager instructions. If no adapter supports uninstalling the root
+prefix, the command exits without removing it.
 
 ---
 

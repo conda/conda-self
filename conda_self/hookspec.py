@@ -22,5 +22,5 @@ hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 
 @hookspec
 def conda_self_adapters(prefix: Path) -> Iterable[CondaSelfAdapter]:
-    """Return an installer adapter when this package owns ``prefix``."""
+    """Yield an adapter for ``prefix`` when this provider recognizes it."""
     raise NotImplementedError

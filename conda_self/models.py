@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class UninstallRequest:
-    """Context passed to an installer-owned uninstall operation."""
+    """Arguments passed to the uninstall callback."""
 
     prefix: Path
     dry_run: bool = False
@@ -23,7 +23,7 @@ class UninstallRequest:
 
 @dataclass(frozen=True)
 class LauncherUpdateRequest:
-    """Context passed to an installer-owned launcher update operation."""
+    """Arguments passed to the launcher update callback."""
 
     prefix: Path
     force_reinstall: bool = False
@@ -35,7 +35,7 @@ class LauncherUpdateRequest:
 
 @dataclass(frozen=True)
 class CondaSelfAdapter:
-    """Distribution-owned implementations for conda-self operations."""
+    """Installer callbacks for uninstalling a prefix or updating its launcher."""
 
     name: str
     uninstall: Callable[[UninstallRequest], int] | None = None

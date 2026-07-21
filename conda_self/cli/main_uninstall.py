@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import argparse
 
-HELP = "Uninstall this conda installation using its installer adapter."
+HELP = "Uninstall this conda installation through its installer or package manager."
 
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:
