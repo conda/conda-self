@@ -1,5 +1,27 @@
 [//]: # (current developments)
 
+## 0.2.1 (2026-07-22)
+
+### Bug fixes
+
+* Make frozen base-environment errors explain that direct modifications are protected and point to `conda self --help` for supported commands. (#142)
+* Keep `conda self update --json` output parseable and forward `--quiet` to the child conda process. (#160)
+
+### Other
+
+* Enable infrastructure-managed Dependabot configuration via conda/infrastructure templates. (#147)
+
+### Contributors
+
+* @danyeaw
+* @jezdez
+* @kenodegard
+* @conda-bot
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2026-05-06   0.2.0:
 ### Enhancements
 
