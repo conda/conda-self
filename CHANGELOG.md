@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Make frozen base-environment errors explain that direct modifications are protected and point to `conda self --help` for supported commands. (#142)
+* Make frozen `base` environment errors explain that direct modifications are protected and point to `conda self --help` for supported commands. (#142)
 * Keep `conda self update --json` output parseable and forward `--quiet` to the child conda process. (#160)
 
 ### Other
