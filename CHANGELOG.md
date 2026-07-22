@@ -16,7 +16,7 @@
 * @danyeaw
 * @jezdez
 * @kenodegard
-* @conda-bot
+* @conda-bot made their first contribution in https://github.com/conda/conda-self/pull/143
 * @dependabot[bot]
 * @pre-commit-ci[bot]
 
