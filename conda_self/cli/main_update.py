@@ -57,7 +57,8 @@ def execute(args: argparse.Namespace) -> int:
             raise PackageNotInstalledError(context.root_prefix, name)
         info_parts.append(f"{name} (installed: {installed.version})")
 
-    if not context.json and not context.quiet:
+    quiet = context.quiet or bool(args.quiet)
+    if not context.json and not quiet:
         print(f"Updating {', '.join(info_parts)}...")
 
     return install_specs_in_protected_env(
@@ -67,5 +68,5 @@ def execute(args: argparse.Namespace) -> int:
         dry_run=context.dry_run,
         json=context.json,
         yes=context.always_yes,
-        quiet=context.quiet,
+        quiet=quiet,
     )
