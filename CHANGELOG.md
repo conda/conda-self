@@ -1,6 +1,27 @@
 [//]: # (current developments)
 
-## 2026-05-06   0.2.0:
+## 0.2.1 (2026-07-22)
+
+### Bug fixes
+
+* Make frozen `base` environment errors explain that direct modifications are protected and point to `conda self --help` for supported commands. (#142)
+* Keep `conda self update --json` output parseable and forward `--quiet` to the child conda process. (#160)
+
+### Other
+
+* Enable infrastructure-managed Dependabot configuration via conda/infrastructure templates. (#147)
+
+### Contributors
+
+* @danyeaw
+* @jezdez
+* @kenodegard
+* @conda-bot made their first contribution in https://github.com/conda/conda-self/pull/143
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+## 0.2.0 (2026-05-06)
+
 ### Enhancements
 
 * Add `conda self reset` to restore the base environment to its installer-provided or post-migration state. (#54, #55 via #83)
@@ -40,8 +61,8 @@
 * @kenodegard
 * @marcoesters
 
+## 0.1.1 (2025-07-21)
 
-## 2025-07-21   0.1.1:
 ### Bug fixes
 
 * Fix `conda self protect` and `conda self remove` help text. (#17)
@@ -50,9 +71,7 @@
 
 * @kenodegard
 
-
-
-## 2025-07-17   0.1.0:
+## 0.1.0 (2025-07-17)
 
 Initial release:
 
@@ -73,7 +92,6 @@ subcommands:
     reset               Reset 'base' environment to essential packages only.
     update              Update 'conda' and/or its plugins in the 'base' environment.
 ```
-
 
 ### Contributors
 
