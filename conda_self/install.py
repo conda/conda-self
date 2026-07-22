@@ -11,6 +11,7 @@ def install_specs_in_protected_env(
     dry_run: bool = False,
     json: bool = False,
     yes: bool = False,
+    quiet: bool = False,
 ) -> int:
     """Install or update specs into the protected base env via subprocess."""
     process = run(
@@ -29,6 +30,7 @@ def install_specs_in_protected_env(
             *(("--dry-run",) if dry_run else ()),
             *(("--json",) if json else ()),
             *(("--yes",) if yes else ()),
+            *(("--quiet",) if quiet else ()),
             "--all" if update_dependencies else "--update-specs",
             *specs,
         ]

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from subprocess import CompletedProcess
 from typing import TYPE_CHECKING
 
 import pytest
@@ -21,6 +23,45 @@ def test_help(conda_cli: CondaCLIFixture):
 
 def test_update_plugin_invalid(conda_cli: CondaCLIFixture):
     conda_cli("self", "update", "--plugin", "conda-fake-solver", raises=CondaValueError)
+
+
+@pytest.mark.parametrize(
+    ("extra_args", "expected_flags", "expected_json"),
+    (
+        pytest.param(("--json",), ("--json",), {"success": True}, id="json"),
+        pytest.param(
+            ("--quiet", "--dry-run"),
+            ("--quiet", "--dry-run"),
+            None,
+            id="quiet+dry-run",
+        ),
+    ),
+)
+def test_update_output_options(
+    extra_args: tuple[str, ...],
+    expected_flags: tuple[str, ...],
+    expected_json: dict[str, bool] | None,
+    conda_cli: CondaCLIFixture,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    commands: list[list[str]] = []
+
+    def run(command: list[str]) -> CompletedProcess[str]:
+        commands.append(command)
+        if expected_json is not None:
+            print(json.dumps(expected_json))
+        return CompletedProcess(command, 0)
+
+    monkeypatch.setattr("conda_self.install.run", run)
+
+    out, _err, _exc = conda_cli("self", "update", *extra_args)
+
+    if expected_json is None:
+        assert out == ""
+    else:
+        assert json.loads(out) == expected_json
+    for flag in expected_flags:
+        assert flag in commands[0]
 
 
 @pytest.mark.parametrize(
