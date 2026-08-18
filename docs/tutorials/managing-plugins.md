@@ -55,9 +55,6 @@ Force reinstall:
 conda self update --force-reinstall
 ```
 
-The update command queries repodata for the latest version of each
-target package and installs `name>={latest}` via `conda install`.
-
 ## Remove a plugin
 
 ![Remove demo](../../demos/remove.gif)

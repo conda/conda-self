@@ -1,0 +1,20 @@
+### Enhancements
+
+* Bare `conda self update` now uses `conda install --update-deps` so
+  conda's direct dependencies can move when needed. (#152 via #171)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
