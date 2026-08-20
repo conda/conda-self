@@ -31,26 +31,29 @@ conda self install conda-index conda-auth
 
 ![Update demo](../../demos/update.gif)
 
-Update all plugins and conda itself:
+Update conda:
 
 ```bash
 conda self update
 ```
 
-Update specific packages:
+Update a specific plugin:
 
 ```bash
-conda self update conda
+conda self update --plugin conda-index
 ```
 
-Force reinstall everything:
+Update conda, plugins, and their dependencies:
+
+```bash
+conda self update --all
+```
+
+Force reinstall:
 
 ```bash
 conda self update --force-reinstall
 ```
-
-The solver finds the latest compatible versions automatically. No
-manual version pinning is needed.
 
 ## Remove a plugin
 

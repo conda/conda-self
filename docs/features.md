@@ -64,14 +64,16 @@ This prevents non-plugin packages from accumulating in base.
 ![Update plugins](../demos/update.gif)
 
 ```bash
-conda self update                    # update all
-conda self update conda              # update specific packages
-conda self update --force-reinstall  # force reinstall all
+conda self update                    # update conda
+conda self update --plugin conda-index
+conda self update --all              # conda, plugins, and dependencies
+conda self update --force-reinstall
 ```
 
-The update command passes package names to `conda install --update-specs`
-and lets the solver find the latest compatible versions. No manual
-version pinning or repodata queries.
+Bare `conda self update` and `--plugin` pass their requested package to
+`conda install --update-deps` so its dependency chain can move when
+needed. `--all` passes `--all` so plugins and their dependencies can
+move together.
 
 ### Remove
 

@@ -8,12 +8,19 @@ def install_specs_in_protected_env(
     specs: list[str],
     force_reinstall: bool = False,
     update_dependencies: bool = False,
+    update_all: bool = False,
     dry_run: bool = False,
     json: bool = False,
     yes: bool = False,
     quiet: bool = False,
 ) -> int:
     """Install or update specs into the protected base env via subprocess."""
+    if update_all:
+        update_flag = "--all"
+    elif update_dependencies:
+        update_flag = "--update-deps"
+    else:
+        update_flag = "--update-specs"
     process = run(
         [
             sys.executable,
@@ -31,7 +38,7 @@ def install_specs_in_protected_env(
             *(("--json",) if json else ()),
             *(("--yes",) if yes else ()),
             *(("--quiet",) if quiet else ()),
-            "--all" if update_dependencies else "--update-specs",
+            update_flag,
             *specs,
         ]
     )

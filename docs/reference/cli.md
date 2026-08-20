@@ -74,18 +74,21 @@ conda self remove conda-index
 
 ## self update
 
-Update conda and its plugins in the base environment.
+Update conda and/or its plugins in the base environment.
 
 ```
-conda self update [<specs>...] [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
+conda self update [--plugin NAME | --all] [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
 ```
 
-`specs`
-: Optional package names to update. If omitted, updates all plugins
-  and conda itself.
+`--plugin`
+: Update a single installed conda plugin.
+
+`--all`
+: Update conda, all plugins, and their dependencies. Passes `--all`
+  to `conda install`.
 
 `--force-reinstall`
-: Force reinstall of all packages.
+: Force reinstall of packages.
 
 `--dry-run`
 : Show what would change without making modifications.
@@ -94,19 +97,20 @@ conda self update [<specs>...] [--force-reinstall] [--dry-run] [--yes] [--json] 
 : Skip confirmation prompts.
 
 ```bash
-# Update everything
+# Update conda
 conda self update
 
-# Update specific packages
-conda self update conda
+# Update a plugin
+conda self update --plugin conda-libmamba-solver
 
-# Force reinstall all
-conda self update --force-reinstall
+# Update conda, plugins, and dependencies
+conda self update --all
 ```
 
-The update command uses `--update-specs` by default and `--all` when
-`--force-reinstall` is specified. It lets the solver find the latest
-compatible versions rather than pinning to specific version numbers.
+Bare `conda self update` and `--plugin` use `conda install --update-deps`
+so the requested package's dependency chain can move when needed. `--all`
+uses `conda install --all` so plugins and their dependencies can move
+together.
 
 ---
 
