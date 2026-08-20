@@ -107,11 +107,10 @@ conda self update --plugin conda-libmamba-solver
 conda self update --all
 ```
 
-Bare `conda self update` uses `conda install --update-deps` so conda's
-direct dependencies can move when needed. `--plugin` uses `--update-specs`,
-which updates that plugin without pulling its dependencies along.
-`--all` uses `conda install --all` so plugins and their dependencies
-can move together.
+Bare `conda self update` and `--plugin` use `conda install --update-deps`
+so the requested package's dependency chain can move when needed. `--all`
+uses `conda install --all` so plugins and their dependencies can move
+together.
 
 ---
 

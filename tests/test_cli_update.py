@@ -26,25 +26,42 @@ def test_update_plugin_invalid(conda_cli: CondaCLIFixture):
 
 
 @pytest.mark.parametrize(
-    ("extra_args", "expected_flags", "expected_json"),
+    ("extra_args", "expected_flags", "unexpected_flags", "expected_json"),
     (
         pytest.param(
             ("--json",),
             ("--json", "--update-deps", "conda"),
+            ("--update-specs", "--all"),
             {"success": True},
             id="json",
         ),
         pytest.param(
             ("--quiet", "--dry-run"),
             ("--quiet", "--dry-run", "--update-deps", "conda"),
+            ("--update-specs", "--all"),
             None,
             id="quiet+dry-run",
+        ),
+        pytest.param(
+            ("--plugin", "conda-libmamba-solver", "--quiet"),
+            ("--quiet", "--update-deps", "conda-libmamba-solver"),
+            ("--update-specs", "--all"),
+            None,
+            id="plugin",
+        ),
+        pytest.param(
+            ("--all", "--quiet"),
+            ("--quiet", "--all", "conda"),
+            ("--update-specs", "--update-deps"),
+            None,
+            id="all",
         ),
     ),
 )
 def test_update_output_options(
     extra_args: tuple[str, ...],
     expected_flags: tuple[str, ...],
+    unexpected_flags: tuple[str, ...],
     expected_json: dict[str, bool] | None,
     conda_cli: CondaCLIFixture,
     monkeypatch: MonkeyPatch,
@@ -67,8 +84,8 @@ def test_update_output_options(
         assert json.loads(out) == expected_json
     for flag in expected_flags:
         assert flag in commands[0]
-    assert "--update-specs" not in commands[0]
-    assert "--all" not in commands[0]
+    for flag in unexpected_flags:
+        assert flag not in commands[0]
 
 
 @pytest.mark.parametrize(

@@ -64,7 +64,7 @@ def execute(args: argparse.Namespace) -> int:
     return install_specs_in_protected_env(
         specs=package_names,
         force_reinstall=args.force_reinstall,
-        update_dependencies=not args.plugin and not args.all,
+        update_dependencies=not args.all,
         update_all=args.all,
         dry_run=context.dry_run,
         json=context.json,

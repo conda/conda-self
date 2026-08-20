@@ -70,11 +70,10 @@ conda self update --all              # conda, plugins, and dependencies
 conda self update --force-reinstall
 ```
 
-Bare `conda self update` passes `conda` to `conda install --update-deps`
-so conda's direct dependencies can move when needed. `--plugin` uses
-`--update-specs`, which updates that plugin without pulling its
-dependencies along. `--all` passes `--all` so plugins and their
-dependencies can move together.
+Bare `conda self update` and `--plugin` pass their requested package to
+`conda install --update-deps` so its dependency chain can move when
+needed. `--all` passes `--all` so plugins and their dependencies can
+move together.
 
 ### Remove
 
