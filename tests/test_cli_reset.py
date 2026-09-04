@@ -446,7 +446,10 @@ def test_reset_snapshot_preserves_interrupt_or_unexpected_error(
     package = make_package_record("missing")
     snapshot = tmp_path / "snapshot.explicit.txt"
     snapshot.write_text(f"@EXPLICIT\n{explicit_entry(package)}\n")
-    error = CondaMultiError((CondaMultiError((nested_error,)),))
+    # The invalid leaf type is the behavior this test verifies.
+    error = CondaMultiError(
+        (CondaMultiError((nested_error,)),)  # ty: ignore[invalid-argument-type]
+    )
     snapshot_reset["fetch_error"] = error
 
     with pytest.raises(CondaMultiError) as exc_info:
