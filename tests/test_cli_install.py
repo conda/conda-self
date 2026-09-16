@@ -113,22 +113,15 @@ def test_install_plugin(
 def test_install_temporary_channels(
     conda_cli: CondaCLIFixture,
     monkeypatch: MonkeyPatch,
+    mocker,
     tmp_path: Path,
     override: bool,
 ):
-    from conda_self import install
-
     config = tmp_path / "condarc"
     original = "channels: [configured]\nchannel_priority: strict\n"
     config.write_text(original)
     monkeypatch.setenv("CONDARC", str(config))
-    commands = []
-
-    def run(command):
-        commands.append(command)
-        return CompletedProcess(command, 1)
-
-    monkeypatch.setattr(install, "run", run)
+    run = mocker.patch("conda_self.install.run", return_value=CompletedProcess([], 1))
     channels = [
         "https://packages.example.org/first",
         "https://packages.example.org/second",
@@ -144,7 +137,7 @@ def test_install_temporary_channels(
         "conda-example",
     )
     assert status == 1
-    command = commands.pop()
+    command = run.call_args.args[0]
     assert ("--override-channels" in command) is override
     assert [
         command[index + 1]
@@ -156,18 +149,11 @@ def test_install_temporary_channels(
 
 
 def test_default_install_does_not_forward_resolved_channels(
-    conda_cli: CondaCLIFixture, monkeypatch: MonkeyPatch
+    conda_cli: CondaCLIFixture, mocker
 ):
-    from conda_self import install
-
-    commands = []
-
-    def run(command):
-        commands.append(command)
-        return CompletedProcess(command, 1)
-
-    monkeypatch.setattr(install, "run", run)
+    run = mocker.patch("conda_self.install.run", return_value=CompletedProcess([], 1))
     _, _, status = conda_cli("self", "install", "conda-example")
     assert status == 1
-    assert "--channel" not in commands[0]
-    assert "--override-channels" not in commands[0]
+    command = run.call_args.args[0]
+    assert "--channel" not in command
+    assert "--override-channels" not in command
