@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from subprocess import CompletedProcess
 from typing import TYPE_CHECKING
 
 import pytest
@@ -25,9 +26,15 @@ def test_install_plugin_dry_run(
     monkeypatch: MonkeyPatch,
     conda_channel: str,
 ):
-    monkeypatch.setenv("CONDA_CHANNELS", conda_channel)
     conda_cli(
-        "self", "install", "--dry-run", "conda-libmamba-solver", raises=DryRunExit
+        "self",
+        "install",
+        "--override-channels",
+        "--channel",
+        conda_channel,
+        "--dry-run",
+        "conda-libmamba-solver",
+        raises=DryRunExit,
     )
 
 
@@ -100,3 +107,53 @@ def test_install_plugin(
         "conda-build",
     )
     assert is_installed(base_env, "conda-build")
+
+
+@pytest.mark.parametrize("override", (False, True))
+def test_install_temporary_channels(
+    conda_cli: CondaCLIFixture,
+    monkeypatch: MonkeyPatch,
+    mocker,
+    tmp_path: Path,
+    override: bool,
+):
+    config = tmp_path / "condarc"
+    original = "channels: [configured]\nchannel_priority: strict\n"
+    config.write_text(original)
+    monkeypatch.setenv("CONDARC", str(config))
+    run = mocker.patch("conda_self.install.run", return_value=CompletedProcess([], 1))
+    channels = [
+        "https://packages.example.org/first",
+        "https://packages.example.org/second",
+    ]
+    _, _, status = conda_cli(
+        "self",
+        "install",
+        "-c",
+        channels[0],
+        "--channel",
+        channels[1],
+        *(("--override-channels",) if override else ()),
+        "conda-example",
+    )
+    assert status == 1
+    command = run.call_args.args[0]
+    assert ("--override-channels" in command) is override
+    assert [
+        command[index + 1]
+        for index, argument in enumerate(command)
+        if argument == "--channel"
+    ] == channels
+    assert "configured" not in command
+    assert config.read_text() == original
+
+
+def test_default_install_does_not_forward_resolved_channels(
+    conda_cli: CondaCLIFixture, mocker
+):
+    run = mocker.patch("conda_self.install.run", return_value=CompletedProcess([], 1))
+    _, _, status = conda_cli("self", "install", "conda-example")
+    assert status == 1
+    command = run.call_args.args[0]
+    assert "--channel" not in command
+    assert "--override-channels" not in command
