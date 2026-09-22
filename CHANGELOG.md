@@ -1,5 +1,50 @@
 [//]: # (current developments)
 
+## 0.3.0 (2026-09-22)
+
+### Enhancements
+
+* Bare and `--plugin` updates now use `conda install --update-deps` so conda can
+  update dependencies of the requested package. (#152 via #171)
+
+### Bug fixes
+
+* Reuse an installed conda package when its package URL and any recorded
+  checksum match the snapshot and the package does not need to be reinstalled,
+  so an unavailable URL does not block the exact reset. (#150 via #177)
+* Validate recorded checksums for local snapshot archives and report download,
+  extraction, and package-cache lookup failures before changing the target
+  environment. (#150 via #177)
+* Respect `--json` and `--quiet` when reporting reset progress and completion.
+  (#150 via #177)
+* Reject the ambiguous `--snapshot installer` option before confirmation or
+  environment changes. Explain how to migrate to `installer-exact` to restore
+  the recorded conda packages or `installer-updated` to retain their currently
+  installed versions without updating or installing missing packages. (#150 via #177)
+
+### Docs
+
+* Correct the documented reset modes, automatic fallback order, installer
+  snapshot filename, and exact-reset limitations. (#150 via #177)
+* Document how to generate and serve local HTML coverage reports. (#183 via #184)
+* Align CLI help, errors, documentation, and recorded demos with Conda
+  terminology and the existing behavior of package operations and base
+  protection. (#181)
+* Update package metadata and documentation links to the conda organization.
+
+### Other
+
+* Add `pytest-cov`, Pixi tasks for line and branch coverage, and Codecov
+  uploads to the test workflow. (#183 via #184)
+* Exclude local editor and agent files from source distributions.
+
+### Contributors
+
+* @danyeaw
+* @jezdez
+* @conda-bot
+* @dependabot[bot]
+
 ## 0.2.1 (2026-07-22)
 
 ### Bug fixes

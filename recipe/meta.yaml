@@ -35,8 +35,8 @@ test:
     - conda self --help
 
 about:
-  home: https://github.com/conda-incubator/conda-self
+  home: https://github.com/conda/conda-self
   license: BSD-3-Clause
   license_file: LICENSE
   summary: A self command for conda
-  dev_url: https://github.com/conda-incubator/conda-self
+  dev_url: https://github.com/conda/conda-self
