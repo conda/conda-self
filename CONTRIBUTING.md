@@ -5,7 +5,7 @@
 1. Make sure `pixi` and `git` are installed. [Instructions for `pixi`](https://pixi.sh/latest/installation/).
 2. Clone this repository.
 ```
-git clone https://github.com/conda-incubator/conda-self
+git clone https://github.com/conda/conda-self
 ```
 3. Change to that directory.
 ```
@@ -74,7 +74,7 @@ comments are disabled.
 
 1. Fork and clone this repository.
 ```
-git clone https://github.com/conda-incubator/conda-self
+git clone https://github.com/conda/conda-self
 ```
 2. Change to that directory.
 ```

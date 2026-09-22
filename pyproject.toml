@@ -26,14 +26,17 @@ dependencies = [
 dynamic = ["version"]
 
 [project.urls]
-documentation = "https://conda-incubator.github.io/conda-self"
-repository = "https://github.com/conda-incubator/conda-self"
+documentation = "https://conda.github.io/conda-self/"
+repository = "https://github.com/conda/conda-self"
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "conda_self/_version.py"
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/.cursor", "/.kilo"]
 
 [project.entry-points.conda]
 "conda-self" = "conda_self.plugin"

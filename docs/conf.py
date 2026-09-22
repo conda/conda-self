@@ -35,7 +35,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/conda-incubator/conda-self",
+            "url": "https://github.com/conda/conda-self",
             "icon": "fa-brands fa-square-github",
             "type": "fontawesome",
         },
@@ -43,7 +43,7 @@ html_theme_options = {
 }
 
 html_context = {
-    "github_user": "conda-incubator",
+    "github_user": "conda",
     "github_repo": "conda-self",
     "github_version": "main",
     "doc_path": "docs",
@@ -53,6 +53,6 @@ html_static_path = ["_static"]
 html_extra_path = ["../demos"]
 html_css_files = ["css/custom.css"]
 
-html_baseurl = "https://conda-incubator.github.io/conda-self/"
+html_baseurl = "https://conda.github.io/conda-self/"
 
 exclude_patterns = ["_build"]
