@@ -59,17 +59,10 @@ pixi run demos quickstart
 pixi run demos
 ```
 
-Each tape sources `demos/_setup.sh` in its recording shell. This downloads a
-fresh Miniforge installer and installs the current checkout as an editable
-plugin. The installation, home directory, configuration, environments, and
-package cache belong to a unique temporary directory, removed when the shell
-exits. Setup failure stops the recording shell rather than falling back to
-your own conda installation. Do not source this script in your working shell.
-
-The editable installation is a recording fixture, not the end-user installation
-procedure. Keep that preparation hidden, but state the reader's prerequisites
-on the corresponding documentation page. Do not hide the operation the demo
-is meant to teach.
+Each tape sources `demos/_setup.sh`, which creates and cleans up an isolated
+temporary Miniforge installation. Do not source it in a working shell. Keep
+setup hidden in recordings, but keep the demonstrated commands and their
+prerequisites on the corresponding page.
 
 When updating a scenario, keep the page, tape, and generated media in the same
 change. Updated tapes should emit both `demos/<name>.gif` and
