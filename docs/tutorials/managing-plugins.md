@@ -1,94 +1,106 @@
 # Managing plugins
 
-This tutorial covers the complete lifecycle of
-[conda plugins](inv:conda:std:doc#dev-guide/plugins/index) in a protected base
-environment: installing, updating, and removing them.
+In this tutorial, you will add a command to conda, use it, and remove it again.
+The example is [conda-spawn](https://conda.github.io/conda-spawn/), which opens
+a child shell in a conda environment. It is an optional convenience, not a
+requirement for using `conda activate` or running Python.
 
-## Prerequisites
+## Before you start
 
-- conda-self installed in base (`conda install -n base conda-self`)
-- Base environment protected (see {doc}`../guides/protecting-base`)
+You need conda-self installed in base and configured channels providing
+conda-spawn. Base may be protected or unprotected. Protection is not required
+for plugin management.
 
-## Install a plugin
-
-![Install plugin demo](../../demos/install-plugin.gif)
-
-```bash
-conda self install conda-index
-```
-
-conda-self runs [conda install](inv:conda:std:doc#commands/install) as a subprocess with
-`--override-frozen`, then validates that the installed package is
-a real conda plugin by checking its entry points. If validation
-fails, the package is automatically uninstalled.
-
-### Multiple plugins at once
+Use the `self-demo` environment from the {doc}`../quickstart` tutorial. If you
+are starting here, create it with Python and accept the proposed installation:
 
 ```bash
-conda self install conda-index conda-spawn
+conda create --name self-demo python
 ```
 
-## Update plugins
+If you already have an unrelated environment with that name, choose an unused
+name and substitute it throughout. For channel setup, see
+{doc}`../guides/custom-channels`.
 
-![Update demo](../../demos/update.gif)
+## Install and use an extension
 
-Update conda:
+Install conda-spawn into the conda installation:
 
 ```bash
-conda self update
+conda self install conda-spawn
 ```
 
-Update a specific plugin:
+Review and accept conda's proposed changes. Conda-self checks that the requested
+package registers a conda plugin. You now have a new `conda spawn` command.
+
+![Install conda-spawn and open a shell in self-demo](../../demos/install-plugin.gif)
+
+{download}`Watch the MP4 recording <../../demos/install-plugin.mp4>`.
+
+Open a child shell in your working environment:
 
 ```bash
-conda self update --plugin conda-index
+conda spawn self-demo
 ```
 
-Update all installed packages:
+Your prompt normally shows `(self-demo)`. In that shell, check Python:
 
 ```bash
-conda self update --all
+python --version
 ```
 
-Force reinstall:
+The version is the Python installed in `self-demo`. Leave the child shell to
+return to your original shell:
 
 ```bash
-conda self update --force-reinstall
+exit
 ```
 
-## Remove a plugin
+Conda-spawn's documentation covers other ways to use it. Here, its role is to
+make the effect of installing a conda plugin visible.
 
-![Remove demo](../../demos/remove.gif)
+## Update the plugin
+
+Back in your original shell, request an update to this plugin:
 
 ```bash
-conda self remove conda-index
+conda self update --plugin conda-spawn
 ```
 
-Conda-self protects conda, conda-self, configured permanent packages, and their
-dependencies from direct removal requests unless `--force` is passed. If you
-try without `--force`, you will see a `PluginRemoveError`. Conda's own
-transaction checks still apply with `--force`.
+Review and accept any proposed changes. If the plugin is already current,
+conda reports that the requested packages are already installed. That is a
+successful result, not an error.
 
-## Channel configuration
+![Request an update to conda-spawn in base](../../demos/update.gif)
 
-conda-self uses your configured channels. Use
-[conda config](inv:conda:std:doc#commands/config) to add or change channels
-before installing. To install plugins from a custom channel:
+{download}`Watch the MP4 recording <../../demos/update.mp4>`.
+
+This operation targets the plugin and its dependencies in base, not Python
+in `self-demo`.
+
+## Remove the extension, keep your environment
+
+When you no longer want the added command, remove its plugin:
 
 ```bash
-# Add the channel first
-conda config --add channels my-channel -n base
-
-# Then install
-conda self install my-plugin
+conda self remove conda-spawn
 ```
 
-Channel-qualified package specs (`conda-forge::my-plugin`) are not supported
-and will produce an error. This keeps channel configuration consistent across
-all operations.
+Review and accept the removal. The `conda spawn` command is no longer available,
+but your working environment still exists. Use ordinary conda to run Python:
 
-## Next steps
+```bash
+conda run -n self-demo python --version
+```
 
-- {doc}`../guides/resetting-base` -- Restore base from a snapshot
-- {doc}`../guides/custom-channels` -- Use custom channels for plugins
-- {doc}`../reference/cli` -- Full CLI reference
+![Remove conda-spawn and verify Python still runs in self-demo](../../demos/remove.gif)
+
+{download}`Watch the MP4 recording <../../demos/remove.mp4>`.
+
+You have installed, used, updated, and removed an extension to conda without
+removing your working environment. Continue using regular conda commands for
+project packages.
+
+For multiple-plugin operations, update scope, force flags, validation failures,
+and protected-package removal rules, use the {doc}`../reference/cli`.
+For the reasoning behind the distinction, see {doc}`../motivation`.
