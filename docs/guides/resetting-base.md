@@ -76,10 +76,7 @@ Use this mode, or a suitable `base-protection` snapshot, when an
 accidentally installed plugin must be removed. Not all installers provide
 this file.
 
-The recording starts with a disposable Miniforge installation that has its
-original installer snapshot and an added conda-spawn plugin. It previews and
-applies `installer-exact`, then inspects the remaining conda packages with
-ordinary conda commands. It does not rely on conda-self remaining installed.
+The demo restores an installer snapshot taken before conda-spawn was installed.
 
 ![Preview an exact installer reset and inspect base afterward](../../demos/reset.gif)
 

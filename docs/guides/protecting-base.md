@@ -57,9 +57,7 @@ Run the fix and review its proposed changes before accepting confirmation:
 conda doctor -n base base-protection --fix
 ```
 
-The recording starts with a disposable Miniforge base containing conda-self
-and NumPy. NumPy represents an existing working package, not a prerequisite
-you should install in base before protection.
+The demo starts with NumPy already installed in base.
 
 ![Protect base, activate the clone, and verify NumPy still works](../../demos/base-protection.gif)
 
@@ -97,19 +95,9 @@ error. That is the intended safeguard.
 
 ## Install packages after protection
 
-For working packages, activate `default` or another project environment and
-use ordinary conda commands:
-
-```bash
-conda activate default
-conda install numpy
-```
-
-Use `conda self update` to maintain conda itself and `conda self install` for
-conda plugins. See {doc}`../tutorials/managing-plugins` for a worked example.
-Do not use protection overrides as your normal way to install project packages.
-Deliberate bypasses and unprotection are documented in
-{ref}`overriding-base-protection`.
+Install working packages in `default` or another project environment. For
+conda plugins, see {doc}`../tutorials/managing-plugins`. For deliberate
+protection bypasses, see {ref}`overriding-base-protection`.
 
 ## Check recovery availability
 
