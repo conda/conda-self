@@ -56,9 +56,6 @@ return to your original shell:
 exit
 ```
 
-Conda-spawn's documentation covers other ways to use it. Here, its role is to
-make the effect of installing a conda plugin visible.
-
 ## Update the plugin
 
 Back in your original shell, request an update to this plugin:
@@ -96,10 +93,6 @@ conda run -n self-demo python --version
 ![Remove conda-spawn and verify Python still runs in self-demo](../../demos/remove.gif)
 
 {download}`Watch the MP4 recording <../../demos/remove.mp4>`.
-
-You have installed, used, updated, and removed an extension to conda without
-removing your working environment. Continue using regular conda commands for
-project packages.
 
 For multiple-plugin operations, update scope, force flags, validation failures,
 and protected-package removal rules, use the {doc}`../reference/cli`.
