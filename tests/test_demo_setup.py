@@ -3,12 +3,16 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 
-@pytest.mark.skipif(shutil.which("bash") is None, reason="VHS setup requires bash")
+@pytest.mark.skipif(
+    sys.platform == "win32" or shutil.which("bash") is None,
+    reason="VHS setup requires a Unix bash shell",
+)
 @pytest.mark.parametrize("failure", ["download", "installer"])
 def test_demo_setup_stops_on_bootstrap_failure(tmp_path: Path, failure: str) -> None:
     script = Path(__file__).parents[1] / "demos" / "_setup.sh"
