@@ -80,25 +80,3 @@ used by subsequent operations.
 Base protection is registered with `conda doctor`, alongside other environment
 health checks. This reuses conda's inspection and repair workflow rather than
 adding a separate top-level migration command.
-
-The commands evolved through `conda self protect`, `conda self migrate`, and
-`conda migrate` before this integration. UX feedback showed that "protect"
-alone did not explain the cloning and changes to base. The current guide
-therefore describes those effects before asking the reader to proceed.
-
-The name `conda self` was chosen over `conda base` because the commands maintain
-the conda installation itself, not an arbitrary environment named base.
-
-## Related approaches
-
-The traditional advice is to keep project packages out of base, but this relies
-on user discipline and needs an exception for conda plugins. The earlier
-conda-protect plugin explored freezing environments. Conda-self combines that
-protection with explicit maintenance operations and recovery choices.
-
-Other tools, including rustup and pipx, also distinguish maintaining a tool
-installation from managing the software used with it. Conda-self applies that
-distinction to conda without replacing conda's package manager.
-
-Conda-self graduated from conda-incubator to the conda organization in 2026.
-See [issue #89](https://github.com/conda/conda-self/issues/89).
