@@ -46,6 +46,42 @@ pip install -e .
 2. `pixi run lint` to run the pre-commit linters and formatters.
 3. `pixi run docs` to build the docs and `pixi run serve` to serve them in your browser.
 
+### Recording documentation demos
+
+The recordings use [VHS](https://github.com/charmbracelet/vhs), `ffmpeg`,
+`ffprobe`, and the JetBrains Mono font. Install these tools before recording.
+The terminal appearance is shared through `demos/_settings.tape`.
+
+Record one scenario or all scenarios from the repository root:
+
+```bash
+pixi run demos quickstart
+pixi run demos
+```
+
+Each tape sources `demos/_setup.sh` in its recording shell. This downloads a
+fresh Miniforge installer and installs the current checkout as an editable
+plugin. The installation, home directory, configuration, environments, and
+package cache belong to a unique temporary directory, removed when the shell
+exits. Setup failure stops the recording shell rather than falling back to
+your own conda installation. Do not source this script in your working shell.
+
+The editable installation is a recording fixture, not the end-user installation
+procedure. Keep that preparation hidden, but state the reader's prerequisites
+on the corresponding documentation page. Do not hide the operation the demo
+is meant to teach.
+
+When updating a scenario, keep the page, tape, and generated media in the same
+change. Updated tapes should emit both `demos/<name>.gif` and
+`demos/<name>.mp4`. Keep copyable commands and expected outcomes beside the
+recording, so readers do not have to play it to follow the instructions.
+
+Watch each recording before submitting it. Check that its commands match the
+page, confirmations and results are readable, and it contains only synthetic
+environment names and public channels. Never record private paths, credentials,
+or personal configuration. A successful VHS run does not prove the recorded
+commands succeeded.
+
 ### Test coverage
 
 Tests collect line and branch coverage for `conda_self`, including Python
