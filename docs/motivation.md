@@ -84,7 +84,7 @@ installed with pip. This is not a backup of your project files or a guarantee
 that external paths used by editable installations move with the environment.
 External packages may no longer work in the reset base environment.
 
-Read {doc}`tutorials/protecting-base` for the procedure and its prerequisites.
+Read {doc}`guides/protecting-base` for the procedure and its prerequisites.
 
 ## Recovery is a separate task
 
