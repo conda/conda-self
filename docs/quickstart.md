@@ -90,5 +90,5 @@ NumPy still imports in `self-demo`, with the same version as before. You used
 conda installation. You can continue using `self-demo` for experiments.
 
 To learn about extending conda, follow {doc}`tutorials/managing-plugins`.
-If you previously worked in base, read {doc}`tutorials/protecting-base` before
+If you previously worked in base, read {doc}`guides/protecting-base` before
 enabling protection. For more context, see {doc}`motivation`.
