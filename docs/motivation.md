@@ -1,129 +1,101 @@
-# Motivation
+# Understanding conda-self
 
-## What conda-self is
+## Conda and conda-self
 
-conda-self is a conda plugin that manages conda installations
-themselves -- specifically the `base` environment where conda, its
-plugins, and their dependencies live. It provides safe commands to
-install, update, and remove plugins in base, and integrates with
-[conda doctor](inv:conda:std:doc#commands/doctor) to protect base from accidental modification.
+Conda manages the software environments you use for coursework and projects.
+Conda-self helps you maintain conda itself. The name `conda self` means
+"conda managing itself."
 
-The name `conda self` reflects this purpose: conda managing itself.
+You do not need conda-self to install Python or create an environment. If you
+are new to conda, start with its
+[getting-started guide](inv:conda:std:doc#user-guide/getting-started).
 
-## The problem
+## Base and your working environments
 
-The conda `base` environment contains conda itself. This makes it a tempting
-target for installing packages directly, but doing so creates real risks:
+Conda is installed in a special environment called `base`, together with the
+packages it needs to run. Your project can have its own environment containing
+Python and any packages your work requires, such as NumPy or pandas.
 
-- Installing a package with conflicting dependencies can break conda
-- A broken base environment means you cannot use conda to fix it
-- Over time, base accumulates packages that are difficult to untangle
-- `conda install --revision REVISION` can restore a prior environment revision,
-  but it does not select a minimal package set for base or validate conda
-  plugins
+Keeping these environments separate lets you change your project's packages
+without changing conda's dependencies. You can use conda while a project
+environment is active. You do not have to return to base to manage another
+environment or to run `conda self update`.
 
-Many users have experienced the frustration of a broken base
-environment. The usual advice is "don't install anything in base,"
-but conda itself needs
-[plugins](inv:conda:std:doc#dev-guide/plugins/index), such as the solver,
-authentication handlers, or custom subcommands, installed there to be
-discovered.
+| Your goal | Command and target |
+| --- | --- |
+| Install a package for your work | `conda install numpy` in your active project environment |
+| Update conda itself | `conda self update`, which targets the conda installation in base |
+| Add an extension to conda | `conda self install conda-spawn`, which installs into base |
 
-## How we got here
+`conda self install` does not replace `conda install`. It is for extensions to
+conda, not for the packages your Python code imports.
 
-conda-self evolved through several iterations, shaped by UX testing
-and community feedback:
+## What is a plugin?
 
-1. The project started as a way to protect and manage the base
-   environment. Early versions had a `conda self protect` command
-   that froze base.
+A plugin adds capabilities to conda. For example, conda-spawn adds the
+`conda spawn` command for opening a shell in an environment. Other plugins
+provide solvers, authentication, or environment-file formats.
 
-2. UX testing showed that "protect" did not communicate what the
-   command actually does -- cloning base to a working environment
-   and locking down the original. The command was renamed to
-   `conda self migrate` (later `conda migrate`).
+A plugin must be installed alongside conda to be discovered. Installing a
+plugin in a project environment does not extend the conda executable in base.
+This is why "never install anything in base" is incomplete advice: conda and
+its extensions still need maintenance.
 
-3. Rather than introducing a new top-level subcommand, the protection
-   logic was integrated into conda's existing health check system via
-   `conda doctor -n base base-protection` and
-   `conda doctor -n base base-protection --fix`. This makes base protection
-   discoverable alongside other environment health checks.
+The {doc}`tutorials/managing-plugins` tutorial demonstrates an extension you
+can use. Plugin authors can read conda's
+[plugin development guide](inv:conda:std:doc#dev-guide/plugins/index).
 
-4. The name `conda self` (rather than `conda base`) was chosen
-   because the plugin manages the conda installation, not just
-   any environment named "base."
+## Why protect base?
 
-5. Reset functionality evolved from removing all conda packages except conda,
-   conda-self, installed conda plugins, configured permanent packages, and
-   their dependencies to supporting installer and base-protection snapshots as
-   well as the current mode.
+Installing project packages in base can introduce dependencies that conflict
+with conda's own requirements. A damaged conda installation can also be unable
+to run the commands needed to repair it.
 
-## Prior art
+Base protection makes ordinary conda commands refuse to change base. Conda-self
+provides explicit commands for the maintenance operations that still belong
+there. This turns advice about keeping environments separate into a safeguard
+against accidental changes.
 
-### Manual discipline
+Protection is optional. Conda-self's installation, update, and removal commands
+also work without it. Protection is not a security mechanism and does not stop
+every program, including pip or a file editor, from modifying base.
 
-The most common approach is to simply avoid installing packages in
-base. This works until you need to install a conda plugin, which
-must live in base to be discovered. There is no tooling to enforce
-this discipline.
+## If you already work in base
 
-### conda-protect
+Adopting conda-self does not by itself move your packages or protect base.
+Enabling protection is a separate, deliberate operation.
 
-An earlier plugin that explored freezing environments to prevent
-accidental modification. conda-self builds on this idea by
-integrating protection directly into conda's health check system
-and providing safe commands for the operations that do need to
-modify base.
+Protection clones base into an environment named `default`, reduces the conda
+package set in base, and marks base as frozen. You can then use the cloned
+environment for your existing work. Ordinary package installation in other
+environments is unchanged.
 
-### Package managers with self-management
+There are two important effects to understand before proceeding:
 
-Tools like `rustup` (Rust), `pipx` (Python CLI tools), and
-`brew` (macOS) separate the tool installation from user packages.
-conda-self brings a similar separation to conda: the base
-environment is for conda and its plugins, while user packages
-live in named environments.
+- If an environment named `default` already exists, accepting the replacement
+  prompt deletes and recreates it. Protection does not merge environments.
+- Protection changes conda's `default_activation_env` setting to the clone's
+  path. This replaces any previous value in your user configuration. Your
+  current shell still needs explicit activation, and editors or notebooks may
+  need their Python environment reselected.
 
-## Design choices
+The clone preserves packages, including external packages such as those
+installed with pip. This is not a backup of your project files or a guarantee
+that external paths used by editable installations move with the environment.
+External packages may no longer work in the reset base environment.
 
-Subprocess over in-process API
-: `conda self install` uses subprocess calls to [conda install](inv:conda:std:doc#commands/install)
-  rather than the in-process Solver API. This ensures frozen
-  environment protection (which lives in conda's CLI layer) is
-  always respected. It also means all of conda's safety checks,
-  channel resolution, and reporting work exactly as users expect.
-  See [issue #15](https://github.com/conda/conda-self/issues/15)
-  for the discussion that led to this decision.
+Read {doc}`tutorials/protecting-base` for the procedure and its prerequisites.
 
-Plugin validation after install
-: Rather than pre-validating packages (which would require
-  maintaining a list of known plugins), conda-self installs first
-  and then checks `importlib.metadata` entry points. If the package
-  is not a conda plugin, conda-self uninstalls the requested package. Packages
-  installed as its dependencies may remain. Validation works with third-party
-  plugins without maintaining an allowlist.
+## Recovery is a separate task
 
-Snapshot-based recovery
-: Snapshots use conda's explicit format and contain an `@EXPLICIT` marker
-  followed by complete package URLs. This is the most reliable way to reproduce
-  an environment state because it bypasses the solver. Reset modes can restore
-  the installer or base-protection snapshot, retain installed versions named
-  by the installer snapshot, or remove every conda package outside the
-  `current` mode's retained set.
+Conda-self can reset base using a snapshot or a selected set of packages. A
+snapshot records conda packages, not the complete state of your machine.
+Protection attempts to save a snapshot, but can continue without one if export
+is unavailable.
 
-Channel configuration over channel-qualified package specs
-: `conda self install conda-forge::pkg` is rejected. Instead,
-  channels are configured via [conda config](inv:conda:std:doc#commands/config), keeping channel
-  settings consistent across install, update, and dependency
-  resolution.
+An exact reset can downgrade packages and remove plugins not recorded in the
+snapshot, including conda-self. It requires conda to still be runnable and the
+required packages to be available. It is not a universal repair command.
+See {doc}`guides/resetting-base` before choosing a reset mode.
 
-Health checks over custom subcommands
-: Base protection is implemented as a `conda doctor` health check
-  rather than a standalone `conda self protect` or `conda migrate`
-  command. This makes it discoverable via `conda doctor --list` and
-  follows the pattern conda already provides for environment
-  maintenance.
-
-## Project status
-
-conda-self graduated from conda-incubator to the conda organization in 2026.
-See [issue #89](https://github.com/conda/conda-self/issues/89) for details.
+For implementation choices and project history, see {doc}`features`.
