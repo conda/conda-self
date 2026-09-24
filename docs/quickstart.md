@@ -1,94 +1,94 @@
 # Quick start
 
-This guide walks you through protecting your base environment and
-managing plugins with conda-self.
+In this tutorial, you will install a package in a working environment and then
+maintain conda separately. By the end, you will know which commands affect your
+work and which affect conda itself.
 
-## Prerequisites
+## Before you start
 
-- conda 26.1.1 or later
-- conda-self installed in base (`conda install -n base conda-self`)
+You need conda 26.1.1 or later in a terminal with conda's shell integration
+enabled. If this is your first time using conda, follow its
+[getting-started guide](inv:conda:std:doc#user-guide/getting-started) first.
 
-## Protect your base environment
-
-![Base protection demo](../demos/base-protection.gif)
-
-Using [conda doctor](inv:conda:std:doc#commands/doctor), check whether base is
-currently protected:
+Install conda-self in base using a configured channel that provides it:
 
 ```bash
-conda doctor -n base base-protection
+conda install -n base conda-self
 ```
 
-If it is not, enable protection:
+This tutorial uses a new environment named `self-demo`. If you already have
+one with that name, choose an unused name and substitute it throughout.
+You do not need to protect base or move any existing packages for this tutorial.
+
+![Install NumPy in self-demo and maintain conda without changing the working environment](../demos/quickstart.gif)
+
+{download}`Watch the MP4 recording <../demos/quickstart.mp4>`.
+
+## Create a place for your work
+
+Create an environment containing Python:
 
 ```bash
-conda doctor -n base base-protection --fix
+conda create --name self-demo python
 ```
 
-This does four things:
-
-1. Tries to save a snapshot of base in conda's explicit format
-2. Clones your current base environment to a new `default` environment
-3. Removes conda packages other than conda, conda-self, configured permanent
-   packages, their dependencies, and installed conda packages named in an
-   available installer snapshot
-4. Marks base as frozen so regular conda commands refuse to modify it unless
-   `--override-frozen` is passed
-
-:::{tip}
-You only need to run this once. After protection, use `conda self`
-commands to manage plugins in base.
-:::
-
-## Install a plugin
-
-![Install plugin demo](../demos/install-plugin.gif)
+Conda shows the packages it will install. Review the list and accept the
+confirmation prompt. Then activate your new environment:
 
 ```bash
-conda self install conda-index
+conda activate self-demo
 ```
 
-conda-self installs the package via a subprocess and checks whether it registers
-as a [conda plugin](inv:conda:std:doc#dev-guide/plugins/index). If validation
-fails, conda-self uninstalls the requested package. Packages installed as its
-dependencies may remain.
+Your prompt normally shows `(self-demo)`. Commands such as `python` now use
+this environment rather than base.
 
-## Update all installed packages
+## Install a project package
+
+Use an ordinary conda command to install NumPy:
 
 ```bash
-conda self update --all
+conda install numpy
 ```
 
-This updates every installed package in the base environment.
-
-## Remove a plugin
-
-![Remove plugin demo](../demos/remove.gif)
+Accept the proposed installation, then check that Python can import it:
 
 ```bash
-conda self remove conda-index
+python -c "import numpy; print(numpy.__version__)"
 ```
 
-Conda-self protects conda, conda-self, configured permanent packages, and their
-dependencies from direct removal requests unless `--force` is passed. Conda's
-own transaction checks still apply.
+You should see a NumPy version number. Its exact value depends on the packages
+available from your configured channels.
 
-## Reset base
+## Maintain conda itself
 
-![Reset demo](../demos/reset.gif)
-
-If something goes wrong, automatically select a reset mode:
+Leave `self-demo` active. Preview an update to conda:
 
 ```bash
-conda self reset
+conda self update --dry-run
 ```
 
-## Next steps
+This targets conda in base and may update its dependencies. It does not update
+the packages in `self-demo`. Review the proposed changes, then run the update:
 
-- {doc}`tutorials/protecting-base` -- A deeper walkthrough of base
-  protection and what happens under the hood
-- {doc}`tutorials/managing-plugins` -- Install, update, and remove
-  plugins with confidence
-- {doc}`features` -- How base protection, snapshots, and plugin
-  validation work
-- {doc}`reference/cli` -- Every command and flag
+```bash
+conda self update
+```
+
+Accept the confirmation if conda proposes changes. A message saying the
+requested packages are already installed is also a successful result.
+
+## Check your working environment
+
+Run the same Python command again:
+
+```bash
+python -c "import numpy; print(numpy.__version__)"
+```
+
+NumPy still imports in `self-demo`, with the same version as before. You used
+`conda install` for your working environment and `conda self update` for the
+conda installation. You can continue using `self-demo` for experiments.
+
+To learn about extending conda, follow {doc}`tutorials/managing-plugins`.
+If you previously worked in base, read {doc}`tutorials/protecting-base` before
+enabling protection. For more context, see {doc}`motivation`.
