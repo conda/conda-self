@@ -9,12 +9,23 @@ All commands are available as `conda self <cmd>`.
 Install conda plugins in the base environment.
 
 ```
-conda self install <specs>... [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
+conda self install <specs>... [--channel CHANNEL] [--override-channels] [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
 ```
 
 `specs`
 : One or more package names to install. Channel-qualified package specs
-  (`channel::pkg`) are rejected -- use [conda config](inv:conda:std:doc#commands/config) instead.
+  (`channel::pkg`) are rejected. Use `--channel` for this installation or
+  [conda config](inv:conda:std:doc#commands/config) for future operations.
+
+`-c`, `--channel CHANNEL`
+: Additional channel to search for this installation only. Repeat this option
+  to search multiple channels in the supplied order, before configured channels.
+  Accepts the same channel names, URLs, and local paths as `conda install`.
+
+`-O`, `--override-channels`
+: Search only the channels supplied with `--channel`. Requires `--channel`.
+  Conda's channel policies, authentication, and terms checks still apply.
+  These options do not change `.condarc` or the channels used by later updates.
 
 `--force-reinstall`
 : Reinstall each requested package even if it is already installed.
