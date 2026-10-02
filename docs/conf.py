@@ -55,4 +55,4 @@ html_css_files = ["css/custom.css"]
 
 html_baseurl = "https://conda.github.io/conda-self/"
 
-exclude_patterns = ["_build"]
+exclude_patterns = ["_build", "superpowers"]
