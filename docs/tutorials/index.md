@@ -28,7 +28,6 @@ base environment.
 ```{toctree}
 :hidden:
 
-protecting-base
 ../quickstart
 managing-plugins
 ```

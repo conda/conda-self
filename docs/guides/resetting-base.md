@@ -1,11 +1,33 @@
 # Resetting the base environment
 
-How to restore your base environment from a snapshot or remove conda packages
-not retained by the current mode.
+Use this guide to restore a recorded conda package set or remove packages not
+needed by your chosen reset mode. This is a recovery or maintenance task, not
+a prerequisite for using Python.
+
+## Choose the outcome first
+
+You need conda and `conda self` to still be runnable. Reset cannot repair an
+installation whose conda executable no longer works. Snapshots describe conda
+packages, not a complete backup of pip packages, project files, or external data.
+
+| Your goal | Mode |
+| --- | --- |
+| Restore the conda packages recorded before protection | `base-protection` |
+| Restore the original installer's exact conda package set | `installer-exact` |
+| Keep installed versions of installer packages and conda tools | `installer-updated` |
+| Keep conda, its plugins, and configured permanent packages | `current` |
+
+:::{warning}
+Exact modes can downgrade packages and remove plugins or permanent packages
+that are absent from the snapshot. This can remove conda-self itself. Preview
+the selected mode with `--dry-run`, and review the proposed changes before
+accepting confirmation.
+:::
 
 ## Automatically select a reset mode
 
 ```bash
+conda self reset --dry-run
 conda self reset
 ```
 
@@ -31,6 +53,7 @@ Restore to the state captured by
 `conda doctor -n base base-protection --fix`:
 
 ```bash
+conda self reset --snapshot base-protection --dry-run
 conda self reset --snapshot base-protection
 ```
 
@@ -41,6 +64,7 @@ This uses `conda-meta/base-protection-state.explicit.txt`.
 Restore to the original state from the installer (e.g. Miniforge):
 
 ```bash
+conda self reset --snapshot installer-exact --dry-run
 conda self reset --snapshot installer-exact
 ```
 
@@ -52,12 +76,19 @@ Use this mode, or a suitable `base-protection` snapshot, when an
 accidentally installed plugin must be removed. Not all installers provide
 this file.
 
+The demo restores an installer snapshot taken before conda-spawn was installed.
+
+![Preview an exact installer reset and inspect base afterward](../../demos/reset.gif)
+
+{download}`Watch the MP4 recording <../../demos/reset.mp4>`.
+
 ### Retain installed versions of installer packages
 
 Retain currently installed conda packages whose names appear in the installer
 snapshot:
 
 ```bash
+conda self reset --snapshot installer-updated --dry-run
 conda self reset --snapshot installer-updated
 ```
 
@@ -75,6 +106,7 @@ in `plugins.self_permanent_packages`, and their dependencies, without using a
 snapshot file:
 
 ```bash
+conda self reset --snapshot current --dry-run
 conda self reset --snapshot current
 ```
 
@@ -90,15 +122,6 @@ your commands and scripts with the mode that matches your intent:
   packages named in the installer snapshot, together with conda, conda-self,
   installed conda plugins, configured permanent packages, and their
   dependencies. It does not update packages or install missing packages.
-
-## Dry run
-
-Preview what a reset would do:
-
-```bash
-conda self reset --dry-run
-conda self reset --snapshot installer-exact --dry-run
-```
 
 ## Packages required for an exact reset
 
@@ -122,11 +145,25 @@ downloaded and extracted before the failure may remain in a package cache.
 
 After resetting, your base environment contains the conda packages selected by
 the reset mode. [conda list](inv:conda:std:doc#commands/list) shows what is left
-in base. You may need to reinstall plugins:
+in base. Inspect the result with ordinary conda commands:
 
 ```bash
-conda self install conda-index
+conda list -n base
+conda --version
 ```
+
+If the snapshot did not include conda-self, reinstall it before using
+`conda self` again. With conda 26.1.1 or later and a channel providing the
+package, deliberate recovery of a still-frozen base can use:
+
+```bash
+conda install -n base --override-frozen conda-self
+```
+
+This is an explicit recovery bypass, not an instruction to install project
+packages in base. See {ref}`overriding-base-protection` for its scope. If the
+restored conda version predates conda-self's requirements, follow that
+version's update instructions before reinstalling the plugin.
 
 Your `default` environment (created during base protection) is
 unaffected by resets.
