@@ -1,0 +1,3 @@
+### Enhancements
+
+* Add `--channel` and `--override-channels` to `conda self install` to select channels for one installation without changing configuration.

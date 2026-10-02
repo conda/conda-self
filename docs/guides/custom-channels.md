@@ -2,9 +2,30 @@
 
 How to install plugins from custom or private channels.
 
-## Configure channels first
+## Select channels for one installation
 
-conda-self uses your configured channels for all operations. Use
+Pass `--channel` to install a plugin from an additional channel without
+changing your configuration:
+
+```bash
+conda self install --channel https://packages.example.org/team my-plugin
+```
+
+Repeat `--channel` to supply multiple channels. Add `--override-channels` to
+search only those channels, for example when setting up an installation that
+has no channel configuration yet:
+
+```bash
+conda self install --override-channels --channel conda-forge conda-index
+```
+
+These options apply to this package transaction only. They do not change
+`.condarc`, runtime update sources, or the channels used by `conda self update`.
+Conda still enforces channel policies, authentication, and repository terms.
+
+## Configure channels for future operations
+
+conda-self uses your configured channels unless overridden for an installation. Use
 [conda config](inv:conda:std:doc#commands/config) to add a custom channel:
 
 ```bash
@@ -20,12 +41,9 @@ conda self install my-plugin
 ## Why channel-qualified package specs are rejected
 
 `conda self install conda-forge::my-plugin` is not supported.
-Channel-qualified package specs would cause inconsistencies between install
-and update operations -- the channel would apply to the install but not to
-future updates, leading to unexpected solver behavior.
-
-Instead, configure channels once and let all operations use the
-same configuration.
+Use `--channel` to select the channels for an installation and its dependencies.
+Configure channels in `.condarc` when future installs and updates should use
+the same channels.
 
 ## Channel priority
 
