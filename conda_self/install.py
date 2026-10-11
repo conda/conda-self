@@ -13,6 +13,8 @@ def install_specs_in_protected_env(
     json: bool = False,
     yes: bool = False,
     quiet: bool = False,
+    channels: list[str] | None = None,
+    override_channels: bool = False,
 ) -> int:
     """Install or update specs into the protected base env via subprocess."""
     if update_all:
@@ -38,6 +40,12 @@ def install_specs_in_protected_env(
             *(("--json",) if json else ()),
             *(("--yes",) if yes else ()),
             *(("--quiet",) if quiet else ()),
+            *(("--override-channels",) if override_channels else ()),
+            *(
+                argument
+                for channel in channels or ()
+                for argument in ("--channel", channel)
+            ),
             update_flag,
             *specs,
         ]
