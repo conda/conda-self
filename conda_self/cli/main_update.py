@@ -52,11 +52,13 @@ def execute(args: argparse.Namespace) -> int:
 
     prefix_data = PrefixData(context.root_prefix)
 
+    specs = []
     info_parts = []
     for name in package_names:
         installed = prefix_data.get(name)
         if not installed:
             raise PackageNotInstalledError(context.root_prefix, name)
+        specs.append(f"{name}>={installed.version}")
         info_parts.append(f"{name} (installed: {installed.version})")
 
     quiet = context.quiet or bool(args.quiet)
@@ -67,7 +69,7 @@ def execute(args: argparse.Namespace) -> int:
             print(f"Updating {', '.join(info_parts)}...")
 
     return install_specs_in_protected_env(
-        specs=package_names,
+        specs=specs,
         force_reinstall=args.force_reinstall,
         update_dependencies=not args.all,
         update_all=args.all,
