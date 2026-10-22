@@ -148,6 +148,7 @@ channels = [
 # Conda 26.5 corrected the subcommand and test fixture annotations used here.
 conda = ">=26.5"
 pytest = "*"
+pytest-mock = "*"
 ty = "==0.0.78"
 
 [tool.pixi.feature.typecheck.tasks]
