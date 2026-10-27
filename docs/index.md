@@ -20,7 +20,7 @@ conda install -n base conda-self
 ```
 
 Installation does not automatically protect base or move packages. If you
-already use base for your work, read {doc}`tutorials/protecting-base` before
+already use base for your work, read {doc}`guides/protecting-base` before
 enabling protection.
 
 ## Project packages and conda maintenance
@@ -47,7 +47,7 @@ Learn to maintain conda separately from your work, then try a conda plugin.
 :::::
 
 :::::{grid-item-card} How-to guides
-:link: tutorials/protecting-base
+:link: guides/protecting-base
 :link-type: doc
 
 Protect an existing base environment and continue using your packages.
@@ -83,6 +83,7 @@ tutorials/index
 :hidden:
 :caption: How-to guides
 
+guides/protecting-base
 guides/resetting-base
 guides/custom-channels
 ```
