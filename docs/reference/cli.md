@@ -1,6 +1,8 @@
 # CLI reference
 
-All commands are available as `conda self <cmd>`.
+All commands are available as `conda self <cmd>`. They maintain the conda
+installation in base, not the currently active project environment. The
+install, update, and remove commands work with protected or unprotected base.
 
 ---
 
@@ -41,7 +43,8 @@ conda self install --force-reinstall conda-index
 
 After installation, conda-self validates that the package registers a `conda`
 entry point. If it does not, the package is automatically uninstalled and a
-`NotAPluginError` is raised.
+`NotAPluginError` is raised. Dependencies installed with the requested package
+may remain.
 
 ---
 
@@ -209,9 +212,18 @@ conda doctor -n base base-protection [--fix] [--dry-run]
   2. Clones the current base environment to `default`
   3. Removes conda packages not retained by base protection
   4. Marks base as frozen with the `conda-meta/frozen` environment marker file
+  5. Sets `default_activation_env` in the user configuration to the clone's path
+
+If the destination `default` environment already exists, confirmation allows
+it to be deleted and recreated. An existing directory that is not a conda
+environment prompts separately before cloning. Neither operation merges two
+environments. Decline the prompt to preserve the existing destination.
 
 Snapshot export can be skipped when base cannot be represented in conda's
 explicit format.
+
+The activation-setting change replaces its previous value while preserving
+unrelated settings. It does not activate the clone in the current shell.
 
 Without `--fix`, reports whether base is currently protected.
 
@@ -232,3 +244,26 @@ with pip, `--fix` will warn you before proceeding. These packages are preserved
 in the cloned `default` environment but may no longer work in the reset base
 environment.
 :::
+
+(overriding-base-protection)=
+## Overriding or removing protection
+
+For ordinary project packages, use a working environment instead of overriding
+protection. These advanced options deliberately allow modifications that base
+protection would otherwise prevent:
+
+| Option | Scope |
+| --- | --- |
+| `--override-frozen` on a conda command | Bypasses frozen-environment protection for that command |
+| `CONDA_PROTECT_FROZEN_ENVS=false` | Disables frozen checks for commands receiving that environment variable |
+| `protect_frozen_envs: false` in conda configuration | Disables frozen checks for commands using that configuration, including other frozen environments |
+
+To remove base's frozen marker entirely:
+
+```bash
+rm "$(conda info --base)/conda-meta/frozen"
+```
+
+Removing this marker does not restore removed packages, delete the clone, or
+restore the previous `default_activation_env` value. It only removes the
+frozen marker from base. Conda's other transaction checks still apply.
