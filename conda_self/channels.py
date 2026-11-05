@@ -1,0 +1,75 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from conda.models.channel import Channel
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
+    from typing import Any
+
+    from conda.models.records import PrefixRecord
+
+
+@dataclass(frozen=True)
+class ChannelChange:
+    """A package whose planned replacement comes from another channel."""
+
+    name: str
+    installed_channel: str  # channel of the installed package, as recorded
+    planned_channel: str  # channel of the planned package, as solved
+
+
+def normalize_channel(channel: object) -> str | None:
+    """Return a normalized channel value for comparison, or None if unusable.
+
+    Normalizing lets differently written forms of the same channel compare
+    equal, e.g. "conda-forge" and "https://conda.anaconda.org/conda-forge".
+    """
+    if channel is None:
+        return None
+    raw_channel = str(channel).strip()
+    if raw_channel in ("", "<unknown>", "unknown"):
+        return None
+    parsed_channel = Channel(raw_channel)
+    # 'defaults' is one configured channel that expands to pkgs/main,
+    # pkgs/r, ... — treat the whole family as one channel.
+    if parsed_channel.canonical_name == "defaults":
+        return "defaults"
+    return parsed_channel.base_url or parsed_channel.canonical_name or raw_channel
+
+
+def find_channel_changes(
+    installed_records: Iterable[PrefixRecord],
+    planned_packages: Iterable[Mapping[str, Any]],
+) -> list[ChannelChange]:
+    """Return packages whose planned channel differs from the installed one."""
+    # Map each installed package name to its channel in two forms:
+    # the raw form for display, and the normalized form for comparison.
+    installed_by_name: dict[str, tuple[str, str]] = {}
+    for record in installed_records:
+        raw_channel = str(record.channel)
+        normalized_channel = normalize_channel(record.channel)
+        if normalized_channel is not None:
+            installed_by_name[record.name] = (raw_channel, normalized_channel)
+
+    changes: list[ChannelChange] = []
+    for package in planned_packages:
+        name = package["name"]
+        if name not in installed_by_name:
+            continue  # newly installed package: out of scope for the ticket
+        planned_raw_channel = package.get("channel") or package.get("base_url")
+        planned_normalized_channel = normalize_channel(planned_raw_channel)
+        if planned_normalized_channel is None:
+            continue
+        installed_raw_channel, installed_normalized_channel = installed_by_name[name]
+        if planned_normalized_channel != installed_normalized_channel:
+            changes.append(
+                ChannelChange(
+                    name=name,
+                    installed_channel=installed_raw_channel,
+                    planned_channel=str(planned_raw_channel),
+                )
+            )
+    return sorted(changes, key=lambda change: change.name)
