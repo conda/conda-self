@@ -1,11 +1,10 @@
 from __future__ import annotations
+
+import os
 import sys
 from subprocess import run
-from json import loads
-from typing import Any
 
 from conda.base.context import context
-from conda.exceptions import CondaError
 
 
 def install_command_to_run(
@@ -48,8 +47,22 @@ def install_specs_in_protected_env(
     json: bool = False,
     yes: bool = False,
     quiet: bool = False,
+    *,
+    check_channel_changes: bool = False,
+    allow_channel_changes: bool = False,
 ) -> int:
     """Install or update specs into the protected base env via subprocess."""
+    env = None
+    if check_channel_changes:
+        env = {
+            **os.environ,
+            "CONDA_SELF_CHECK_CHANNEL_CHANGES": "1",
+            **(
+                {"CONDA_SELF_ALLOW_CHANNEL_CHANGES": "1"}
+                if allow_channel_changes
+                else {}
+            ),
+        }
     command = install_command_to_run(
         specs,
         force_reinstall=force_reinstall,
@@ -60,7 +73,7 @@ def install_specs_in_protected_env(
         yes=yes,
         quiet=quiet,
     )
-    return run(command).returncode
+    return run(command, env=env).returncode
 
 def uninstall_specs_in_protected_env(
     specs: list[str],
@@ -80,30 +93,4 @@ def uninstall_specs_in_protected_env(
     ]
     process = run(cmd)
     return process.returncode
-
-def planned_packages(
-    specs: list[str],
-    *,
-    force_reinstall: bool = False,
-    update_dependencies: bool = False,
-    update_all: bool = False,
-) -> list[dict[str, Any]]:
-    """Solve an install without applying it; return the planned packages."""
-    command = install_command_to_run(
-        specs,
-        force_reinstall=force_reinstall,
-        update_dependencies=update_dependencies,
-        update_all=update_all,
-        dry_run=True,   # forced: solve only, apply nothing
-        json=True,      # forced: machine-readable plan on stdout
-        yes=True,       # captured subprocess has no terminal to prompt on)
-    )
-
-    result = run(command, capture_output=True, text=True)
-    plan = loads(result.stdout)
-    if result.returncode != 0 or not plan.get("success", False):
-        raise CondaError(
-            plan.get("message") or result.stderr or "Could not compute the update plan."
-        )
-    return plan["actions"]["LINK"]
 

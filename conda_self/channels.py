@@ -1,15 +1,19 @@
 from __future__ import annotations
 
+import os
+import sys
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from conda.models.channel import Channel
+from conda.exceptions import CondaValueError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
     from typing import Any
 
-    from conda.models.records import PrefixRecord
+    from conda.models.records import PrefixRecord, PackageRecord
 
 
 @dataclass(frozen=True)
@@ -73,3 +77,54 @@ def find_channel_changes(
                 )
             )
     return sorted(changes, key=lambda change: change.name)
+
+
+def check_solved_channel_changes(
+    repodata_fn: str,
+    unlink_precs: tuple[PackageRecord, ...],
+    link_precs: tuple[PackageRecord, ...],
+) -> None:
+    """Check a solved transaction for channel changes (post-solve hook)."""
+    # Only active for `conda self update`, which sets this on the subprocess.
+    if os.environ.get("CONDA_SELF_CHECK_CHANNEL_CHANGES") != "1":
+        return
+
+    planned_packages = [
+        {"name": record.name, "channel": str(record.channel)} for record in link_precs
+    ]
+    changes = find_channel_changes(unlink_precs, planned_packages)
+    if not changes:
+        return
+
+    print(
+        "Warning: this update would move the following packages "
+        "to a different channel:",
+        file=sys.stderr,
+    )
+    for change in changes:
+        print(
+            f"  {change.name}: {change.installed_channel} -> {change.planned_channel}",
+            file=sys.stderr,
+        )
+
+    # The update was explicitly opted in: warn, but do not ask or refuse.
+    if os.environ.get("CONDA_SELF_ALLOW_CHANNEL_CHANGES") == "1":
+        return
+
+    from conda.base.context import context
+
+    if context.dry_run:
+        return
+    if context.json or context.always_yes or not sys.stdin.isatty():
+        raise CondaValueError(
+            "Refusing to move packages to a different channel in "
+            "non-interactive mode. Pass --allow-channel-changes to proceed."
+        )
+
+    from conda.reporters import confirm_yn
+
+    confirm_yn(
+        "Proceed with changing package channels?[y/n]:\n",
+        default="no",
+        dry_run=context.dry_run,
+    )

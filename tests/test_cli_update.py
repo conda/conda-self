@@ -70,13 +70,6 @@ def test_update_output_options(
 
     def run(command: list[str], **kwargs) -> CompletedProcess[str]:
         commands.append(command)
-        if kwargs.get("capture_output"):
-            # pre-flight dry run: hand back a valid, empty plan
-            return CompletedProcess(
-                command,
-                0,
-                stdout=json.dumps({"success": True, "actions": {"LINK": []}}),
-            )
         if expected_json is not None:
             print(json.dumps(expected_json))
         return CompletedProcess(command, 0)
@@ -90,9 +83,9 @@ def test_update_output_options(
     else:
         assert json.loads(out) == expected_json
     for flag in expected_flags:
-        assert flag in commands[-1]
+        assert flag in commands[0]
     for flag in unexpected_flags:
-        assert flag not in commands[-1]
+        assert flag not in commands[0]
 
 
 @pytest.mark.parametrize(
@@ -128,7 +121,7 @@ def test_install_specs_update_flags(
 
     commands: list[list[str]] = []
 
-    def run(command: list[str]) -> CompletedProcess[str]:
+    def run(command: list[str], **kwargs) -> CompletedProcess[str]:
         commands.append(command)
         return CompletedProcess(command, 0)
 
@@ -178,22 +171,3 @@ def test_update(
     )
     assert "Updating" in result.stdout
     assert expected in result.stdout
-
-
-def test_planned_packages(monkeypatch: MonkeyPatch) -> None:
-    from conda_self.install import planned_packages
-
-    link = [{"name": "conda", "channel": "pkgs/main"}]
-    commands: list[list[str]] = []
-
-    def run(command: list[str], **kwargs) -> CompletedProcess[str]:
-        commands.append(command)
-        return CompletedProcess(
-            command, 0, stdout=json.dumps({"success": True, "actions": {"LINK": link}})
-        )
-
-    monkeypatch.setattr("conda_self.install.run", run)
-
-    assert planned_packages(["conda"], update_all=True) == link
-    for flag in ("--dry-run", "--json", "--all"):
-        assert flag in commands[0]
