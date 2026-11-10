@@ -1,9 +1,18 @@
+import os
+from contextlib import contextmanager
 from types import SimpleNamespace
+from typing import Iterator
 
 import pytest
 from conda.exceptions import CondaValueError
 from conda.models.channel import Channel
 from conda.models.records import PrefixRecord
+
+from conda_self.channels import (
+    ChannelChange,
+    check_solved_channel_changes,
+    find_channel_changes,
+)
 
 
 def installed_package(name: str, channel: str) -> PrefixRecord:
@@ -16,12 +25,6 @@ def installed_package(name: str, channel: str) -> PrefixRecord:
         subdir="osx-arm64",
         fn=f"{name}-1.0-0.conda",
     )
-
-from conda_self.channels import (
-    ChannelChange,
-    check_solved_channel_changes,
-    find_channel_changes,
-)
 
 
 def test_detects_channel_change() -> None:
@@ -36,22 +39,23 @@ def test_detects_channel_change() -> None:
         )
     ]
 
+
 def test_moving_within_defaults_is_not_a_change() -> None:
-    installed= [installed_package("r-base", "pkgs/main")]
-    planned= [{"name": "r-base", "channel": "pkgs/r"}]
+    installed = [installed_package("r-base", "pkgs/main")]
+    planned = [{"name": "r-base", "channel": "pkgs/r"}]
 
     assert find_channel_changes(installed, planned) == []
 
 
 def test_channel_url_and_channel_name_are_equivalent() -> None:
     installed = [installed_package("conda", "https://conda.anaconda.org/conda-forge")]
-    planned=[ {"name": "conda", "channel": "conda-forge"}]
+    planned = [{"name": "conda", "channel": "conda-forge"}]
     assert find_channel_changes(installed, planned) == []
 
 
 def test_new_package_is_ignored() -> None:
     installed = [installed_package("conda", "https://conda.anaconda.org/conda-forge")]
-    planned= [{"name": "new-package", "channel": "pkgs/main"}]
+    planned = [{"name": "new-package", "channel": "pkgs/main"}]
     assert find_channel_changes(installed, planned) == []
 
 
@@ -88,18 +92,39 @@ def moved_package_pair() -> tuple[tuple[PrefixRecord, ...], tuple[PrefixRecord, 
     )
 
 
-def set_hook_context(
-    monkeypatch: pytest.MonkeyPatch,
-    *,
-    dry_run: bool = False,
-    json: bool = False,
-    always_yes: bool = False,
-) -> None:
-    monkeypatch.setattr("conda.base.context.context.dry_run", dry_run, raising=False)
-    monkeypatch.setattr("conda.base.context.context.json", json, raising=False)
-    monkeypatch.setattr(
-        "conda.base.context.context.always_yes", always_yes, raising=False
-    )
+@contextmanager
+def hook_context(
+    *, dry_run: bool = False, json: bool = False, always_yes: bool = False
+) -> Iterator[None]:
+    """Drive gate-relevant context flags via CONDA_* env vars + reset_context.
+
+    Same approach as other tests (e.g. CONDA_CHANNELS): never assign
+    ``context.dry_run`` / ``json`` / ``always_yes`` directly — that leaves
+    instance attributes which shadow later CLI parsing in other tests.
+    """
+    from conda.base.context import reset_context
+
+    env_flags = {
+        "CONDA_DRY_RUN": dry_run,
+        "CONDA_JSON": json,
+        "CONDA_ALWAYS_YES": always_yes,
+    }
+    previous = {name: os.environ.get(name) for name in env_flags}
+    try:
+        for name, enabled in env_flags.items():
+            if enabled:
+                os.environ[name] = "true"
+            else:
+                os.environ.pop(name, None)
+        reset_context()
+        yield
+    finally:
+        for name, value in previous.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+        reset_context()
 
 
 def set_terminal(monkeypatch: pytest.MonkeyPatch, *, is_tty: bool) -> None:
@@ -154,10 +179,10 @@ def test_hook_warns_and_proceeds_on_dry_run(
 ) -> None:
     monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
     monkeypatch.delenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", raising=False)
-    set_hook_context(monkeypatch, dry_run=True)
     unlink_precs, link_precs = moved_package_pair()
 
-    check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+    with hook_context(dry_run=True):
+        check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
 
     assert "Warning" in capsys.readouterr().err
 
@@ -178,12 +203,12 @@ def test_hook_refuses_channel_changes_without_interactive_confirmation(
 ) -> None:
     monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
     monkeypatch.delenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", raising=False)
-    set_hook_context(monkeypatch, **context_kwargs)
     set_terminal(monkeypatch, is_tty=terminal_is_tty)
     unlink_precs, link_precs = moved_package_pair()
 
-    with pytest.raises(CondaValueError, match="--allow-channel-changes"):
-        check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+    with hook_context(**context_kwargs):
+        with pytest.raises(CondaValueError, match="--allow-channel-changes"):
+            check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
 
     assert "Warning" in capsys.readouterr().err
 
@@ -193,7 +218,6 @@ def test_hook_asks_for_confirmation_on_a_terminal(
 ) -> None:
     monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
     monkeypatch.delenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", raising=False)
-    set_hook_context(monkeypatch)
     set_terminal(monkeypatch, is_tty=True)
     prompts: list[str] = []
     monkeypatch.setattr(
@@ -202,7 +226,8 @@ def test_hook_asks_for_confirmation_on_a_terminal(
     )
     unlink_precs, link_precs = moved_package_pair()
 
-    check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+    with hook_context():
+        check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
 
     assert len(prompts) == 1
     assert "Warning" in capsys.readouterr().err
