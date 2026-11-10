@@ -1,3 +1,7 @@
+from types import SimpleNamespace
+
+import pytest
+from conda.exceptions import CondaValueError
 from conda.models.channel import Channel
 from conda.models.records import PrefixRecord
 
@@ -13,7 +17,11 @@ def installed_package(name: str, channel: str) -> PrefixRecord:
         fn=f"{name}-1.0-0.conda",
     )
 
-from conda_self.channels import ChannelChange, find_channel_changes
+from conda_self.channels import (
+    ChannelChange,
+    check_solved_channel_changes,
+    find_channel_changes,
+)
 
 
 def test_detects_channel_change() -> None:
@@ -70,3 +78,131 @@ def test_only_the_package_that_moves_is_reported() -> None:
             planned_channel="conda-forge",
         )
     ]
+
+
+def moved_package_pair() -> tuple[tuple[PrefixRecord, ...], tuple[PrefixRecord, ...]]:
+    """Solved records where conda moves from conda-forge to pkgs/main."""
+    return (
+        (installed_package("conda", "conda-forge"),),
+        (installed_package("conda", "pkgs/main"),),
+    )
+
+
+def set_hook_context(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    dry_run: bool = False,
+    json: bool = False,
+    always_yes: bool = False,
+) -> None:
+    monkeypatch.setattr("conda.base.context.context.dry_run", dry_run, raising=False)
+    monkeypatch.setattr("conda.base.context.context.json", json, raising=False)
+    monkeypatch.setattr(
+        "conda.base.context.context.always_yes", always_yes, raising=False
+    )
+
+
+def set_terminal(monkeypatch: pytest.MonkeyPatch, *, is_tty: bool) -> None:
+    import sys
+
+    fake_sys = SimpleNamespace(
+        stdin=SimpleNamespace(isatty=lambda: is_tty),
+        stderr=sys.stderr,
+    )
+    monkeypatch.setattr("conda_self.channels.sys", fake_sys)
+
+
+def test_hook_does_nothing_without_check_env_var(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", raising=False)
+    unlink_precs, link_precs = moved_package_pair()
+
+    check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+
+    assert capsys.readouterr().err == ""
+
+
+def test_hook_does_nothing_when_nothing_moves(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
+    unlink_precs = (installed_package("conda", "conda-forge"),)
+    link_precs = (installed_package("conda", "conda-forge"),)
+
+    check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+
+    assert capsys.readouterr().err == ""
+
+
+def test_hook_warns_and_proceeds_when_channel_changes_are_allowed(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
+    monkeypatch.setenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", "1")
+    unlink_precs, link_precs = moved_package_pair()
+
+    check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+
+    err = capsys.readouterr().err
+    assert "Warning" in err
+    assert "conda" in err
+
+
+def test_hook_warns_and_proceeds_on_dry_run(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
+    monkeypatch.delenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", raising=False)
+    set_hook_context(monkeypatch, dry_run=True)
+    unlink_precs, link_precs = moved_package_pair()
+
+    check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+
+    assert "Warning" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("context_kwargs", "terminal_is_tty"),
+    (
+        pytest.param({"json": True}, True, id="json-output"),
+        pytest.param({"always_yes": True}, True, id="always-yes"),
+        pytest.param({}, False, id="no-terminal"),
+    ),
+)
+def test_hook_refuses_channel_changes_without_interactive_confirmation(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    context_kwargs: dict[str, bool],
+    terminal_is_tty: bool,
+) -> None:
+    monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
+    monkeypatch.delenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", raising=False)
+    set_hook_context(monkeypatch, **context_kwargs)
+    set_terminal(monkeypatch, is_tty=terminal_is_tty)
+    unlink_precs, link_precs = moved_package_pair()
+
+    with pytest.raises(CondaValueError, match="--allow-channel-changes"):
+        check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+
+    assert "Warning" in capsys.readouterr().err
+
+
+def test_hook_asks_for_confirmation_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
+    monkeypatch.delenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", raising=False)
+    set_hook_context(monkeypatch)
+    set_terminal(monkeypatch, is_tty=True)
+    prompts: list[str] = []
+    monkeypatch.setattr(
+        "conda.reporters.confirm_yn",
+        lambda message, **kwargs: prompts.append(message) or True,
+    )
+    unlink_precs, link_precs = moved_package_pair()
+
+    check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+
+    assert len(prompts) == 1
+    assert "Warning" in capsys.readouterr().err
