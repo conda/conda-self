@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
     from typing import Any
 
-    from conda.models.records import PrefixRecord, PackageRecord
+    from conda.models.records import PackageRecord
 
 
 @dataclass(frozen=True)
@@ -45,7 +45,7 @@ def normalize_channel(channel: object) -> str | None:
 
 
 def find_channel_changes(
-    installed_records: Iterable[PrefixRecord],
+    installed_records: Iterable[PackageRecord],
     planned_packages: Iterable[Mapping[str, Any]],
 ) -> list[ChannelChange]:
     """Return packages whose planned channel differs from the installed one."""
