@@ -37,9 +37,11 @@ def normalize_channel(channel: object) -> str | None:
     if raw_channel in ("", "<unknown>", "unknown"):
         return None
     parsed_channel = Channel(raw_channel)
-    # 'defaults' is one configured channel that expands to pkgs/main,
-    # pkgs/r, ... — treat the whole family as one channel.
+    # 'defaults' expands to pkgs/main, pkgs/r, ... — treat that family as one
+    # channel *per host*, so a mirror move still counts as a change.
     if parsed_channel.canonical_name == "defaults":
+        if parsed_channel.location:
+            return f"defaults@{parsed_channel.location}"
         return "defaults"
     return parsed_channel.base_url or parsed_channel.canonical_name or raw_channel
 

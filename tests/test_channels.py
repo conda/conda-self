@@ -47,6 +47,19 @@ def test_moving_within_defaults_is_not_a_change() -> None:
     assert find_channel_changes(installed, planned) == []
 
 
+def test_moving_defaults_to_a_different_host_is_a_change() -> None:
+    installed = [installed_package("conda", "https://repo.anaconda.com/pkgs/main")]
+    planned = [{"name": "conda", "channel": "https://example.invalid/pkgs/main"}]
+
+    assert find_channel_changes(installed, planned) == [
+        ChannelChange(
+            name="conda",
+            installed_channel="https://repo.anaconda.com/pkgs/main",
+            planned_channel="https://example.invalid/pkgs/main",
+        )
+    ]
+
+
 def test_channel_url_and_channel_name_are_equivalent() -> None:
     installed = [installed_package("conda", "https://conda.anaconda.org/conda-forge")]
     planned = [{"name": "conda", "channel": "conda-forge"}]
