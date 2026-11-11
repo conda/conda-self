@@ -50,15 +50,21 @@ def find_channel_changes(
     installed_records: Iterable[PackageRecord],
     planned_packages: Iterable[Mapping[str, Any]],
 ) -> list[ChannelChange]:
-    """Return packages whose planned channel differs from the installed one."""
+    """Return packages whose planned channel differs from the installed one.
+
+    Packages whose channel cannot be compared (unknown on either side) are
+    included too — same consent path as a real channel move.
+    """
     # Map each installed package name to its channel in two forms:
-    # the raw form for display, and the normalized form for comparison.
-    installed_by_name: dict[str, tuple[str, str]] = {}
+    # the raw form for display, and the normalized form for comparison
+    # (None when the installed channel cannot be compared).
+    installed_by_name: dict[str, tuple[str, str | None]] = {}
     for record in installed_records:
         raw_channel = str(record.channel)
-        normalized_channel = normalize_channel(record.channel)
-        if normalized_channel is not None:
-            installed_by_name[record.name] = (raw_channel, normalized_channel)
+        installed_by_name[record.name] = (
+            raw_channel,
+            normalize_channel(record.channel),
+        )
 
     changes: list[ChannelChange] = []
     for package in planned_packages:
@@ -67,15 +73,21 @@ def find_channel_changes(
             continue  # newly installed package: out of scope for the ticket
         planned_raw_channel = package.get("channel") or package.get("base_url")
         planned_normalized_channel = normalize_channel(planned_raw_channel)
-        if planned_normalized_channel is None:
-            continue
         installed_raw_channel, installed_normalized_channel = installed_by_name[name]
-        if planned_normalized_channel != installed_normalized_channel:
+        planned_display = (
+            str(planned_raw_channel) if planned_raw_channel is not None else "<unknown>"
+        )
+
+        if (
+            installed_normalized_channel is None
+            or planned_normalized_channel is None
+            or planned_normalized_channel != installed_normalized_channel
+        ):
             changes.append(
                 ChannelChange(
                     name=name,
                     installed_channel=installed_raw_channel,
-                    planned_channel=str(planned_raw_channel),
+                    planned_channel=planned_display,
                 )
             )
     return sorted(changes, key=lambda change: change.name)
@@ -98,16 +110,39 @@ def check_solved_channel_changes(
     if not changes:
         return
 
-    print(
-        "Warning: this update would move the following packages "
-        "to a different channel:",
-        file=sys.stderr,
-    )
-    for change in changes:
+    def is_unknown(channel: str) -> bool:
+        return channel.strip() in ("", "<unknown>", "unknown")
+
+    unknown = [
+        change
+        for change in changes
+        if is_unknown(change.installed_channel) or is_unknown(change.planned_channel)
+    ]
+    moved = [change for change in changes if change not in unknown]
+
+    if moved:
         print(
-            f"  {change.name}: {change.installed_channel} -> {change.planned_channel}",
+            "Warning: this update would move the following packages "
+            "to a different channel:",
             file=sys.stderr,
         )
+        for change in moved:
+            print(
+                f"  {change.name}: {change.installed_channel} -> {change.planned_channel}",
+                file=sys.stderr,
+            )
+
+    if unknown:
+        print(
+            "Warning: the channel is unknown for the following packages, "
+            "so it could not be verified:",
+            file=sys.stderr,
+        )
+        for change in unknown:
+            print(
+                f"  {change.name}: {change.installed_channel} -> {change.planned_channel}",
+                file=sys.stderr,
+            )
 
     # The update was explicitly opted in: warn, but do not ask or refuse.
     if os.environ.get("CONDA_SELF_ALLOW_CHANNEL_CHANGES") == "1":

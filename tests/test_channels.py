@@ -72,10 +72,55 @@ def test_new_package_is_ignored() -> None:
     assert find_channel_changes(installed, planned) == []
 
 
-def test_unknown_installed_channel_is_ignored() -> None:
+def test_unknown_channel_requires_consent() -> None:
     installed = [installed_package("conda", "<unknown>")]
     planned = [{"name": "conda", "channel": "pkgs/main"}]
-    assert find_channel_changes(installed, planned) == []
+    assert find_channel_changes(installed, planned) == [
+        ChannelChange(
+            name="conda",
+            installed_channel="<unknown>",
+            planned_channel="pkgs/main",
+        )
+    ]
+
+
+def test_hook_warns_that_channel_is_unknown(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
+    monkeypatch.setenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", "1")
+    unlink_precs = (installed_package("conda", "<unknown>"),)
+    link_precs = (installed_package("conda", "pkgs/main"),)
+
+    check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+
+    err = capsys.readouterr().err
+    assert "channel is unknown" in err
+    assert "conda" in err
+    assert "different channel" not in err
+
+
+def test_hook_warns_for_both_channel_moves_and_unknown_channels(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
+    monkeypatch.setenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", "1")
+    unlink_precs = (
+        installed_package("conda", "conda-forge"),
+        installed_package("certifi", "<unknown>"),
+    )
+    link_precs = (
+        installed_package("conda", "pkgs/main"),
+        installed_package("certifi", "pkgs/main"),
+    )
+
+    check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+
+    err = capsys.readouterr().err
+    assert "different channel" in err
+    assert "channel is unknown" in err
+    assert "conda" in err
+    assert "certifi" in err
 
 
 def test_only_the_package_that_moves_is_reported() -> None:
