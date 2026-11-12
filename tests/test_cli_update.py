@@ -127,7 +127,14 @@ def test_install_specs_update_flags(
 
     monkeypatch.setattr("conda_self.install.run", run)
 
-    assert install_specs_in_protected_env(["conda"], **kwargs) == 0
+    assert (
+        install_specs_in_protected_env(
+            ["conda"],
+            update_dependencies=kwargs.get("update_dependencies", False),
+            update_all=kwargs.get("update_all", False),
+        )
+        == 0
+    )
     assert expected_flag in commands[0]
     for flag in unexpected_flags:
         assert flag not in commands[0]
