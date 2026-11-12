@@ -51,15 +51,15 @@ def test_update_modes_mutually_exclusive(
     (
         pytest.param(
             ("--json",),
-            ("--json", "--all", "conda", "conda-libmamba-solver"),
-            ("--update-specs", "--update-deps"),
+            ("--json", "--update-deps", "conda", "conda-libmamba-solver"),
+            ("--update-specs", "--all"),
             {"success": True},
             id="json",
         ),
         pytest.param(
             ("--quiet", "--dry-run"),
-            ("--quiet", "--dry-run", "--all", "conda"),
-            ("--update-specs", "--update-deps"),
+            ("--quiet", "--dry-run", "--update-deps", "conda"),
+            ("--update-specs", "--all"),
             None,
             id="quiet+dry-run",
         ),
@@ -79,8 +79,8 @@ def test_update_modes_mutually_exclusive(
         ),
         pytest.param(
             ("--force-reinstall", "--yes", "--quiet"),
-            ("--force-reinstall", "--yes", "--quiet", "--all", "conda"),
-            ("--update-specs", "--update-deps"),
+            ("--force-reinstall", "--yes", "--quiet", "--update-deps", "conda"),
+            ("--update-specs", "--all"),
             None,
             id="reinstall",
         ),
@@ -100,8 +100,8 @@ def test_update_modes_mutually_exclusive(
         ),
         pytest.param(
             ("--all", "--quiet"),
-            ("--quiet", "--all", "conda", "conda-libmamba-solver"),
-            ("--update-specs", "--update-deps"),
+            ("--quiet", "--update-deps", "conda", "conda-libmamba-solver"),
+            ("--update-specs", "--all"),
             None,
             id="all",
         ),
@@ -191,17 +191,17 @@ def test_install_specs_update_flags(
 @pytest.mark.parametrize(
     "extra_args,expected",
     (
-        pytest.param((), "all installed packages", id="default"),
+        pytest.param((), "conda-libmamba-solver (installed:", id="default"),
         pytest.param(("--conda-only",), "conda (installed:", id="conda-only"),
         pytest.param(
             ("--plugin", "conda-libmamba-solver"),
             "conda-libmamba-solver (installed:",
             id="plugin",
         ),
-        pytest.param(("--all",), "all installed packages", id="all"),
+        pytest.param(("--all",), "conda-libmamba-solver (installed:", id="all"),
         pytest.param(
             ("--all", "--force-reinstall"),
-            "all installed packages",
+            "conda-libmamba-solver (installed:",
             id="all+force-reinstall",
         ),
     ),

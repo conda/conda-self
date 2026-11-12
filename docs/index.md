@@ -22,7 +22,7 @@ $ conda doctor -n base base-protection --fix
 # Install a plugin safely
 $ conda self install conda-index
 
-# Update all installed packages
+# Update conda and all installed conda plugins
 $ conda self update
 
 # Remove a plugin

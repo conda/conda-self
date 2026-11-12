@@ -1,7 +1,8 @@
 ### Enhancements
 
-* Make `conda self update` update all installed packages in the base environment
-  by default, matching `conda self update --all`. Use the new `--conda-only`
-  option to retain the previous behavior of updating conda and its dependencies.
-  `--plugin` continues to target one plugin. The three explicit update options
-  are mutually exclusive.
+* Make `conda self update` target conda and all installed conda plugins by
+  default, allowing their dependencies to update. Explicit `--all` now uses
+  the same targeted update instead of updating every installed package in base.
+  Use the new `--conda-only` option to retain the previous default of updating
+  conda and its dependencies. `--plugin` continues to target one plugin.
+  The three explicit update options are mutually exclusive.
