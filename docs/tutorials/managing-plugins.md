@@ -32,10 +32,10 @@ conda self install conda-index conda-spawn
 
 ![Update demo](../../demos/update.gif)
 
-Update conda:
+Update conda and its dependencies without updating all installed packages:
 
 ```bash
-conda self update
+conda self update --conda-only
 ```
 
 Update a specific plugin:
@@ -44,16 +44,18 @@ Update a specific plugin:
 conda self update --plugin conda-index
 ```
 
-Update all installed packages:
+Update all installed packages (the default):
 
 ```bash
-conda self update --all
+conda self update
 ```
 
-Force reinstall:
+You can also pass `--all` explicitly for the same behavior.
+
+Force reinstall conda:
 
 ```bash
-conda self update --force-reinstall
+conda self update --conda-only --force-reinstall
 ```
 
 ## Remove a plugin

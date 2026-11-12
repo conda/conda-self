@@ -79,18 +79,25 @@ conda self remove conda-index
 
 ## self update
 
-Update conda, one conda plugin, or all packages in the base environment.
+Update all installed packages in the base environment by default, or target
+conda or one conda plugin.
 
 ```
-conda self update [--plugin NAME | --all] [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
+conda self update [--plugin NAME | --all | --conda-only] [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
 ```
 
 `--plugin`
 : Update a single installed conda plugin.
 
 `--all`
-: Update all installed packages in the base environment. Passes `--all` to
-  `conda install`.
+: Update all installed packages in the base environment (the default).
+  Passes `--all` to `conda install`.
+
+`--conda-only`
+: Update conda and its dependencies instead of all installed packages.
+  This preserves the previous default behavior, but does not freeze dependencies.
+
+`--plugin`, `--all`, and `--conda-only` are mutually exclusive.
 
 `--force-reinstall`
 : Uninstall and reinstall each requested package, even if it is already
@@ -103,19 +110,23 @@ conda self update [--plugin NAME | --all] [--force-reinstall] [--dry-run] [--yes
 : Skip confirmation prompts.
 
 ```bash
-# Update conda
+# Update all installed packages
 conda self update
+
+# Update conda and its dependencies
+conda self update --conda-only
 
 # Update a plugin
 conda self update --plugin conda-libmamba-solver
 
-# Update all installed packages
+# Explicitly request the default behavior
 conda self update --all
 ```
 
-Bare `conda self update` and `--plugin` use `conda install --update-deps`
-so conda can update dependencies of the requested package. `--all` uses
-`conda install --all` to update all installed packages.
+Bare `conda self update` and `--all` use `conda install --all` to update all
+installed packages. `--conda-only` and `--plugin` use
+`conda install --update-deps` so conda can update dependencies of the requested
+package.
 
 ---
 

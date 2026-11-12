@@ -56,10 +56,11 @@ dependencies may remain.
 ## Update all installed packages
 
 ```bash
-conda self update --all
+conda self update
 ```
 
-This updates every installed package in the base environment.
+This updates every installed package in the base environment. To update only
+conda and its dependencies, use `conda self update --conda-only` instead.
 
 ## Remove a plugin
 

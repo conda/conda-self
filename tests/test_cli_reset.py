@@ -938,7 +938,7 @@ def test_reset_base_protection(
         )
         assert is_installed(prefix, "conda-index")
 
-        conda_cli_subprocess(prefix, "self", "update", "--yes")
+        conda_cli_subprocess(prefix, "self", "update", "--conda-only", "--yes")
         assert is_installed(prefix, "conda")
         assert not is_installed(prefix, f"conda={conda_version}"), "conda not updated"
         conda_cli(

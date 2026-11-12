@@ -31,32 +31,76 @@ def test_update_plugin_invalid(conda_cli: CondaCLIFixture):
 
 
 @pytest.mark.parametrize(
+    "extra_args",
+    (
+        ("--all", "--conda-only"),
+        ("--plugin", "conda-libmamba-solver", "--conda-only"),
+        ("--plugin", "conda-libmamba-solver", "--all"),
+    ),
+)
+def test_update_modes_mutually_exclusive(
+    extra_args: tuple[str, ...], conda_cli: CondaCLIFixture
+) -> None:
+    _out, err, exc = conda_cli("self", "update", *extra_args, raises=SystemExit)
+    assert exc.value.code == 2
+    assert "not allowed with argument" in err
+
+
+@pytest.mark.parametrize(
     ("extra_args", "expected_flags", "unexpected_flags", "expected_json"),
     (
         pytest.param(
             ("--json",),
-            ("--json", "--update-deps", "conda"),
-            ("--update-specs", "--all"),
+            ("--json", "--all", "conda", "conda-libmamba-solver"),
+            ("--update-specs", "--update-deps"),
             {"success": True},
             id="json",
         ),
         pytest.param(
             ("--quiet", "--dry-run"),
-            ("--quiet", "--dry-run", "--update-deps", "conda"),
-            ("--update-specs", "--all"),
+            ("--quiet", "--dry-run", "--all", "conda"),
+            ("--update-specs", "--update-deps"),
             None,
             id="quiet+dry-run",
         ),
         pytest.param(
+            ("--conda-only", "--json"),
+            ("--json", "--update-deps", "conda"),
+            ("--update-specs", "--all", "conda-libmamba-solver"),
+            {"success": True},
+            id="conda-only+json",
+        ),
+        pytest.param(
+            ("--conda-only", "--quiet", "--dry-run"),
+            ("--quiet", "--dry-run", "--update-deps", "conda"),
+            ("--update-specs", "--all"),
+            None,
+            id="conda-only+quiet+dry-run",
+        ),
+        pytest.param(
+            ("--force-reinstall", "--yes", "--quiet"),
+            ("--force-reinstall", "--yes", "--quiet", "--all", "conda"),
+            ("--update-specs", "--update-deps"),
+            None,
+            id="reinstall",
+        ),
+        pytest.param(
+            ("--conda-only", "--force-reinstall", "--quiet"),
+            ("--force-reinstall", "--quiet", "--update-deps", "conda"),
+            ("--update-specs", "--all"),
+            None,
+            id="conda-only+reinstall",
+        ),
+        pytest.param(
             ("--plugin", "conda-libmamba-solver", "--quiet"),
             ("--quiet", "--update-deps", "conda-libmamba-solver"),
-            ("--update-specs", "--all"),
+            ("--update-specs", "--all", "conda"),
             None,
             id="plugin",
         ),
         pytest.param(
             ("--all", "--quiet"),
-            ("--quiet", "--all", "conda"),
+            ("--quiet", "--all", "conda", "conda-libmamba-solver"),
             ("--update-specs", "--update-deps"),
             None,
             id="all",
@@ -93,6 +137,9 @@ def test_update_output_options(
             flag = f"{flag}>={installed.version}"
         assert flag in commands[0]
     for flag in unexpected_flags:
+        if not flag.startswith("--"):
+            installed = PrefixData(context.root_prefix).get(flag)
+            flag = f"{flag}>={installed.version}"
         assert flag not in commands[0]
 
 
@@ -144,7 +191,8 @@ def test_install_specs_update_flags(
 @pytest.mark.parametrize(
     "extra_args,expected",
     (
-        pytest.param((), "conda (installed:", id="conda"),
+        pytest.param((), "all installed packages", id="default"),
+        pytest.param(("--conda-only",), "conda (installed:", id="conda-only"),
         pytest.param(
             ("--plugin", "conda-libmamba-solver"),
             "conda-libmamba-solver (installed:",
@@ -185,6 +233,8 @@ def test_update(
     "extra_args,package_name",
     (
         pytest.param((), "conda", id="conda"),
+        pytest.param((), "conda-libmamba-solver", id="default-plugin"),
+        pytest.param(("--conda-only",), "conda", id="conda-only"),
         pytest.param(("--force-reinstall",), "conda", id="reinstall"),
         pytest.param(
             ("--plugin", "conda-libmamba-solver"),

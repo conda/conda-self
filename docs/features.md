@@ -69,15 +69,17 @@ installed as its dependencies may remain.
 ![Update plugins](../demos/update.gif)
 
 ```bash
-conda self update                    # update conda
+conda self update                    # all installed packages (default)
+conda self update --conda-only        # conda and its dependencies
 conda self update --plugin conda-index
-conda self update --all              # all installed packages
+conda self update --all              # explicitly request the default
 conda self update --force-reinstall
 ```
 
-Bare `conda self update` and `--plugin` use `conda install --update-deps` so
-conda can update dependencies of the requested package. `--all` passes
-`--all` to update all installed packages.
+Bare `conda self update` and `--all` pass `--all` to update all installed
+packages. `--conda-only` and `--plugin` use `conda install --update-deps` so
+conda can update dependencies of the requested package. Use `--conda-only`
+to retain the previous default behavior.
 
 ### Remove
 
