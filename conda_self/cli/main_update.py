@@ -21,6 +21,15 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
             "already installed."
         ),
     )
+    parser.add_argument(
+    "--allow-channel-changes",
+    action="store_true",
+    help=(
+        "Allow updates that move installed packages to a different channel. "
+        "Without this flag, such updates require interactive confirmation "
+        "and default to 'No'."
+    ),
+)
     update_group = parser.add_mutually_exclusive_group()
     update_group.add_argument(
         "--plugin",
@@ -75,4 +84,6 @@ def execute(args: argparse.Namespace) -> int:
         json=context.json,
         yes=context.always_yes,
         quiet=quiet,
+        check_channel_changes=True,
+        allow_channel_changes=args.allow_channel_changes,
     )

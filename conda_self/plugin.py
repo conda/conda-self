@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 
 from conda.common.configuration import PrimitiveParameter, SequenceParameter
 from conda.plugins.hookspec import hookimpl
-from conda.plugins.types import CondaHealthCheck, CondaSetting, CondaSubcommand
+from conda.plugins.types import CondaHealthCheck, CondaSetting, CondaSubcommand, CondaPostSolve
+
 
 from .cli import configure_parser, execute
 from .constants import PERMANENT_PACKAGES, SELF_PERMANENT_PACKAGES_SETTING
@@ -54,4 +55,15 @@ def conda_settings() -> Iterable[CondaSetting]:
             "and conda self remove --force may remove them."
         ),
         parameter=SequenceParameter(PrimitiveParameter("", element_type=str)),
+    )
+
+
+@hookimpl
+def conda_post_solves() -> Iterable[CondaPostSolve]:
+    """Register the channel-change check to run after each solve."""
+    from .channels import check_solved_channel_changes
+
+    yield CondaPostSolve(
+        name="conda-self-channel-check",
+        action=check_solved_channel_changes,
     )
