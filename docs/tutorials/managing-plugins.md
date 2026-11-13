@@ -7,7 +7,7 @@ environment: installing, updating, and removing them.
 ## Prerequisites
 
 - conda-self installed in base (`conda install -n base conda-self`)
-- Base environment protected (see {doc}`protecting-base`)
+- Base environment protected (see {doc}`../guides/protecting-base`)
 
 ## Install a plugin
 

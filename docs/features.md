@@ -17,7 +17,7 @@ second permission system. Ordinary conda commands refuse modifications and
 the marker's message points readers to `conda self --help`. Explicit overrides
 remain possible. Programs that do not use conda's checks can still modify files.
 
-See {doc}`tutorials/protecting-base` for the procedure and
+See {doc}`guides/protecting-base` for the procedure and
 {doc}`configuration` for settings and snapshot files.
 
 ## Subprocesses and conda's checks

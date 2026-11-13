@@ -40,7 +40,7 @@ packages. `conda self install` is for conda plugins, not ordinary Python package
 
 - [Quick start](https://conda.github.io/conda-self/quickstart/): learn to keep project packages separate from conda maintenance.
 - [Understanding conda-self](https://conda.github.io/conda-self/motivation/): base environments, plugins, and why protection exists.
-- [Protecting base](https://conda.github.io/conda-self/tutorials/protecting-base/): understand the changes before migrating existing work.
+- [Protecting base](https://conda.github.io/conda-self/guides/protecting-base/): understand the changes before migrating existing work.
 - [CLI reference](https://conda.github.io/conda-self/reference/cli/) and [configuration](https://conda.github.io/conda-self/configuration/): command options, settings, and limitations.
 - [Resetting base](https://conda.github.io/conda-self/guides/resetting-base/): choose a recovery operation deliberately.
 
