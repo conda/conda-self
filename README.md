@@ -21,8 +21,7 @@ subcommands:
     install             Install conda plugins in the base environment.
     remove              Remove conda plugins from the base environment.
     reset               Reset the base environment.
-    update              Update conda, one conda plugin, or all packages in the
-                        base environment.
+    update              Update conda and all installed conda plugins by default.
 ```
 
 ### Custom channels

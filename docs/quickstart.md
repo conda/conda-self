@@ -53,13 +53,15 @@ as a [conda plugin](inv:conda:std:doc#dev-guide/plugins/index). If validation
 fails, conda-self uninstalls the requested package. Packages installed as its
 dependencies may remain.
 
-## Update all installed packages
+## Update conda and plugins
 
 ```bash
-conda self update --all
+conda self update
 ```
 
-This updates every installed package in the base environment.
+This updates conda and all installed conda plugins, allowing their dependencies
+to update too. To target only conda and its dependencies, use
+`conda self update --conda-only` instead.
 
 ## Remove a plugin
 
