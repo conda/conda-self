@@ -1,117 +1,49 @@
 # conda-self
 
-Commands to manage your `base` environment safely.
+Maintain conda itself, separately from the Python and packages you use for
+your work.
 
-## `conda self`
+Conda-self provides commands for updating conda and managing its extensions,
+called plugins. It also helps protect the `base` environment where conda is
+installed from accidental changes.
 
-Manage conda and its plugins in the base environment.
+You do not need conda-self to create an environment or start using Python.
+New to conda? Start with
+[conda's getting-started guide](https://docs.conda.io/projects/conda/en/stable/user-guide/getting-started.html).
 
-```
-$ conda self
-usage: conda self [-V] [-h] {install,remove,reset,update} ...
+## Install
 
-Manage conda and its plugins in the base environment.
-
-options:
-  -V, --version         Show the 'conda-self' version number and exit.
-  -h, --help            Show this help message and exit.
-
-subcommands:
-  {install,remove,reset,update}
-    install             Install conda plugins in the base environment.
-    remove              Remove conda plugins from the base environment.
-    reset               Reset the base environment.
-    update              Update conda, one conda plugin, or all packages in the
-                        base environment.
-```
-
-### Custom channels
-
-`conda self install` and `conda self update` use your configured channels.
-To install plugins from a custom channel (e.g. a company or community channel
-on anaconda.org or prefix.dev), add it to your configuration first:
-
-```
-conda config --add channels my-channel -n base
-conda self install my-plugin
-```
-
-This keeps channel configuration consistent across install, update, and
-dependency resolution.
-
-Channel-qualified package specs (e.g. `conda-forge::my-plugin`) are not
-supported and will result in an error.
-
-## Base Environment Protection
-
-To check if your base environment is protected, run:
-
-```
-conda doctor -n base base-protection
-```
-
-To protect your base environment, run:
-
-```
-conda doctor -n base base-protection --fix
-```
-
-This will:
-
-1. Try to save a snapshot of base in conda's explicit format
-2. Clone your current base environment to a new "default" environment
-3. Remove conda packages other than conda, conda-self, configured permanent
-   packages, their dependencies, and installed conda packages named in an
-   available installer snapshot
-4. Mark the base environment as frozen so conda refuses modifications by
-   default
-
-To see all available health checks, run:
-
-```
-conda doctor --list
-```
-
-### Unprotecting base
-
-To remove protection entirely, delete the `conda-meta/frozen` environment
-marker file:
-
-```
-rm "$(conda info --base)/conda-meta/frozen"
-```
-
-To bypass protection for a single command, pass `--override-frozen`. To disable
-frozen-environment checks through configuration, set
-`CONDA_PROTECT_FROZEN_ENVS=false` or add `protect_frozen_envs: false` to your
-`.condarc`.
-
-## Configuration
-
-### Permanent packages
-
-The `current` and `installer-updated` reset modes retain `conda`, `conda-self`,
-installed conda plugins, configured permanent packages, and their dependencies.
-To configure additional permanent packages, add them to the
-`plugins.self_permanent_packages` setting in your `.condarc`:
-
-```yaml
-plugins:
-  self_permanent_packages:
-    - anaconda-anon-usage
-```
-
-Or use `conda config`:
+With conda 26.1.1 or later and a configured channel providing conda-self:
 
 ```bash
-conda config --add plugins.self_permanent_packages anaconda-anon-usage
+conda install -n base conda-self
+conda self --help
 ```
 
-## Installation
+Installing conda-self does not automatically protect base or move existing
+packages. Protection is a separate operation.
 
-1. `conda install -n base conda-self`
-2. `conda self --help`
+## Update conda
+
+You can maintain conda while a project environment is active:
+
+```bash
+conda self update --dry-run
+conda self update
+```
+
+These commands target conda in base, not the packages in your active project
+environment. Continue using regular `conda install` commands for project
+packages. `conda self install` is for conda plugins, not ordinary Python packages.
+
+## Documentation
+
+- [Quick start](https://conda.github.io/conda-self/quickstart/): learn to keep project packages separate from conda maintenance.
+- [Understanding conda-self](https://conda.github.io/conda-self/motivation/): base environments, plugins, and why protection exists.
+- [Protecting base](https://conda.github.io/conda-self/tutorials/protecting-base/): understand the changes before migrating existing work.
+- [CLI reference](https://conda.github.io/conda-self/reference/cli/) and [configuration](https://conda.github.io/conda-self/configuration/): command options, settings, and limitations.
+- [Resetting base](https://conda.github.io/conda-self/guides/resetting-base/): choose a recovery operation deliberately.
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md)
+See [CONTRIBUTING.md](./CONTRIBUTING.md), including how to record the VHS demos.
