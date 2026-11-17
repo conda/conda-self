@@ -1,0 +1,11 @@
+### Enhancements
+
+### Bug fixes
+
+* Prevent `conda self update` from downgrading conda or a plugin selected for update. (#205)
+
+### Deprecations
+
+### Docs
+
+### Other
