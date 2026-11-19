@@ -14,6 +14,20 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     parser.description = HELP
     add_output_and_prompt_options(parser)
     parser.add_argument(
+        "-c",
+        "--channel",
+        action="append",
+        help=(
+            "Additional channel to search for this installation only. May be repeated."
+        ),
+    )
+    parser.add_argument(
+        "-O",
+        "--override-channels",
+        action="store_true",
+        help="Search only the channels supplied with --channel for this installation.",
+    )
+    parser.add_argument(
         "--force-reinstall",
         action="store_true",
         help="Reinstall each requested package even if it is already installed.",
@@ -41,7 +55,8 @@ def execute(args: argparse.Namespace) -> int:
         joined = ", ".join(specs_with_channels)
         raise CondaValueError(
             f"Channel-qualified package specs are not supported: {joined}\n"
-            "Configure channels via `conda config --add channels <channel>` instead."
+            "Use --channel for this installation, or configure channels with "
+            "`conda config --add channels <channel>` for future operations."
         )
 
     print("Installing packages:", *args.specs)
@@ -52,6 +67,8 @@ def execute(args: argparse.Namespace) -> int:
         dry_run=context.dry_run,
         json=context.json,
         yes=context.always_yes,
+        channels=args.channel,
+        override_channels=args.override_channels,
     )
 
     if returncode != 0:
