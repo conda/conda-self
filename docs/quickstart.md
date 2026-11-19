@@ -1,25 +1,26 @@
 # Quick start
 
-This guide walks you through protecting your base environment and
-managing plugins with conda-self.
+This guide uses native conda to install a plugin and conda-self to protect
+and maintain base.
 
 ## Prerequisites
 
-- conda 26.1.1 or later
-- conda-self installed in base (`conda install -n base conda-self`)
+- For native plugin installation, use conda 26.11.0 or later.
+- For the base-protection check, update, remove, and reset steps, use
+  conda-self installed in base with conda 26.1.1 or later.
 
 ## Protect your base environment
 
 ![Base protection demo](../demos/base-protection.gif)
 
-Using [conda doctor](inv:conda:std:doc#commands/doctor), check whether base is
-currently protected:
+If your installer already protected base, skip to {ref}`quickstart-install-plugin`.
+Otherwise, check whether base is protected with
+[conda doctor](inv:conda:std:doc#commands/doctor).
 
 ```bash
 conda doctor -n base base-protection
 ```
 
-If the installer already protected base, skip to {ref}`quickstart-install-plugin`.
 For an unprotected base, enable protection with this command.
 
 ```bash
