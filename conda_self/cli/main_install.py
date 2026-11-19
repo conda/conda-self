@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import sys
-from importlib.util import find_spec
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -36,7 +34,7 @@ def execute(args: argparse.Namespace) -> int:
     from conda.exceptions import CondaValueError
     from conda.models.match_spec import MatchSpec
 
-    from ..install import run_in_protected_env
+    from ..install import install_specs_in_protected_env
 
     warnings.warn(
         f"conda self install is pending deprecation. {REPLACEMENT}",
@@ -56,52 +54,14 @@ def execute(args: argparse.Namespace) -> int:
     if not context.json and not context.quiet:
         print("Installing packages:", *args.specs, flush=True)
 
-    options = ["--update-specs"]
-    if args.force_reinstall:
-        options.append("--force-reinstall")
-    if args.console:
-        options.extend(("--console", args.console))
-    options.extend(["--verbose"] * context.verbosity)
-
-    # Older conda versions may lack the parent package or only provide list and info.
-    plugins_package = "conda.plugins.subcommands.plugins"
-    native_install = find_spec(plugins_package) and find_spec(
-        f"{plugins_package}.install"
-    )
-    # Hold legacy install output until we know which JSON result to report.
-    validate_after_install = not native_install and not context.dry_run
-    result = run_in_protected_env(
-        ("plugins", "install") if native_install else ("install",),
-        [*options, "--", *args.specs],
+    return install_specs_in_protected_env(
+        args.specs,
+        plugins_only=True,
+        force_reinstall=args.force_reinstall,
         dry_run=context.dry_run,
         json=context.json,
         yes=context.always_yes,
         quiet=context.quiet,
-        capture_stdout=context.json and validate_after_install,
+        console=args.console,
+        verbosity=context.verbosity,
     )
-    if result.returncode == 0 and validate_after_install:
-        from ..exceptions import NotAPluginError
-        from ..validate import (
-            conda_plugin_packages,
-            normalize_plugin_name,
-            reload_plugin_packages,
-        )
-
-        reload_plugin_packages()
-        plugin_names = conda_plugin_packages()
-        invalid_names = [
-            spec.name
-            for spec in specs_to_add
-            if normalize_plugin_name(spec.name) not in plugin_names
-        ]
-        if invalid_names:
-            cleanup = run_in_protected_env(
-                ("remove",), invalid_names, yes=True, capture_stdout=context.json
-            )
-            if cleanup.returncode and cleanup.stdout:
-                sys.stderr.write(cleanup.stdout)
-            raise NotAPluginError(invalid_names)
-
-    if result.stdout is not None:
-        sys.stdout.write(result.stdout)
-    return result.returncode

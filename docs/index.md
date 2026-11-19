@@ -17,7 +17,7 @@ The plugin installation command below requires conda 26.11.0 or later.
 On older conda versions, use `conda self install conda-index`.
 
 ```bash
-# Protect your base environment
+# Protect base if the installer hasn't already done so
 $ conda doctor -n base base-protection --fix
 
 # Install a plugin in the protected base environment

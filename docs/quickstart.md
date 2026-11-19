@@ -19,7 +19,8 @@ currently protected:
 conda doctor -n base base-protection
 ```
 
-If it is not, enable protection:
+If the installer already protected base, skip to {ref}`quickstart-install-plugin`.
+For an unprotected base, enable protection with this command.
 
 ```bash
 conda doctor -n base base-protection --fix
@@ -35,10 +36,11 @@ This does four things:
 4. Marks base as frozen so regular conda commands refuse to modify it unless
    `--override-frozen` is passed
 
+(quickstart-install-plugin)=
 ## Install a plugin
 
-With conda 26.11.0 or later, install `conda-index` into the base environment
-you just protected. Conda checks that the package provides a plugin before
+With conda 26.11.0 or later, install `conda-index` into the protected base
+environment. Conda checks that the package provides a plugin before
 installing it.
 
 ```bash
