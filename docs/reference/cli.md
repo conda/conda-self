@@ -6,7 +6,23 @@ All commands are available as `conda self <cmd>`.
 
 ## self install
 
-Install conda plugins in the base environment.
+`conda self install` is pending deprecation in conda-self 0.4.0. With conda
+26.11.0 or later, install plugins in base with the native command. The
+explicit environment name targets base even when another environment is active.
+
+```bash
+conda plugins install --name base conda-index
+
+# To install into a protected base environment
+conda plugins install --name base --override-frozen conda-index
+```
+
+`conda self install` still targets the running conda installation and passes
+`--override-frozen` for you. Where the native command is available, both
+commands check the requested packages before installing them. On older conda
+versions, `self install` checks for a `conda` entry point after installation
+and removes requested packages that fail the check. Their dependencies may
+remain installed.
 
 ```
 conda self install <specs>... [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
@@ -31,17 +47,16 @@ conda self install <specs>... [--force-reinstall] [--dry-run] [--yes] [--json] [
 `--quiet`
 : Suppress non-essential output.
 
-```bash
-# Install a plugin
-conda self install conda-index
+### Deprecation schedule
 
-# Force reinstall
-conda self install --force-reinstall conda-index
-```
-
-After installation, conda-self validates that the package registers a `conda`
-entry point. If it does not, the package is automatically uninstalled and a
-`NotAPluginError` is raised.
+The notice period starts when conda-self 0.4.0 ships, after conda 26.11.0.
+During this period Python hides the `PendingDeprecationWarning` by default.
+Once at least four months and two regular conda releases have passed, a March
+or September conda-self release can begin warning on each use. The following
+March or September is the earliest removal window. The preceding conda-self
+release will announce the removal, and the release that removes the command
+will require conda 26.11.0 or later.
+See [CEP 9](https://conda.org/learn/ceps/cep-0009/).
 
 ---
 

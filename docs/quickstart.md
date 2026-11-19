@@ -35,23 +35,17 @@ This does four things:
 4. Marks base as frozen so regular conda commands refuse to modify it unless
    `--override-frozen` is passed
 
-:::{tip}
-You only need to run this once. After protection, use `conda self`
-commands to manage plugins in base.
-:::
-
 ## Install a plugin
 
-![Install plugin demo](../demos/install-plugin.gif)
+With conda 26.11.0 or later, install `conda-index` into the base environment
+you just protected. Conda checks that the package provides a plugin before
+installing it.
 
 ```bash
-conda self install conda-index
+conda plugins install --name base --override-frozen conda-index
 ```
 
-conda-self installs the package via a subprocess and checks whether it registers
-as a [conda plugin](inv:conda:std:doc#dev-guide/plugins/index). If validation
-fails, conda-self uninstalls the requested package. Packages installed as its
-dependencies may remain.
+On older conda versions, use `conda self install conda-index`.
 
 ## Update all installed packages
 

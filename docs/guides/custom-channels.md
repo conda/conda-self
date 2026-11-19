@@ -11,21 +11,16 @@ conda-self uses your configured channels for all operations. Use
 conda config --add channels my-channel -n base
 ```
 
-Then install normally:
+On conda 26.11.0 or later, install the plugin into base. Add
+`--override-frozen` if you intend to modify a protected base environment.
 
 ```bash
-conda self install my-plugin
+conda plugins install --name base my-plugin
 ```
 
-## Why channel-qualified package specs are rejected
-
-`conda self install conda-forge::my-plugin` is not supported.
-Channel-qualified package specs would cause inconsistencies between install
-and update operations -- the channel would apply to the install but not to
-future updates, leading to unexpected solver behavior.
-
-Instead, configure channels once and let all operations use the
-same configuration.
+On older conda versions, use `conda self install my-plugin`. That command
+rejects channel-qualified package specs such as `conda-forge::my-plugin`.
+Configuring the channel makes it available for future updates as well.
 
 ## Channel priority
 
@@ -60,5 +55,5 @@ conda config --add channels conda-forge -n base
 conda config --add channels my-company-channel -n base
 
 # my-company-channel has higher priority (added last)
-conda self install my-plugin
+conda plugins install --name base my-plugin
 ```
