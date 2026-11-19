@@ -14,6 +14,7 @@ frozen so regular conda commands refuse to modify it unless
 ## Quick example
 
 The plugin installation command below requires conda 26.11.0 or later.
+See the {doc}`reference/cli` for how conda handles a frozen base.
 On older conda versions, use `conda self install conda-index`.
 
 ```bash
@@ -21,7 +22,7 @@ On older conda versions, use `conda self install conda-index`.
 $ conda doctor -n base base-protection --fix
 
 # Install a plugin in the protected base environment
-$ conda plugins install --name base --override-frozen conda-index
+$ conda plugins install -n base conda-index
 
 # Update all installed packages
 $ conda self update --all

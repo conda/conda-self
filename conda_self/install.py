@@ -32,15 +32,19 @@ def install_specs_in_protected_env(
     native_install = (
         plugins_only and find_spec(plugins) and find_spec(f"{plugins}.install")
     )
+    if native_install:
+        install_command = ["plugins", "install", "-n", "base"]
+    else:
+        install_command = ["install", f"--prefix={sys.prefix}"]
+        if hasattr(context, "protect_frozen_envs"):
+            install_command.append("--override-frozen")
+
     validate_after_install = plugins_only and not native_install and not dry_run
     cmd = [
         sys.executable,
         "-m",
         "conda",
-        *(("plugins",) if native_install else ()),
-        "install",
-        f"--prefix={sys.prefix}",
-        *(("--override-frozen",) if hasattr(context, "protect_frozen_envs") else ()),
+        *install_command,
         *(("--force-reinstall",) if force_reinstall else ()),
         *(("--dry-run",) if dry_run else ()),
         *(("--json",) if json else ()),

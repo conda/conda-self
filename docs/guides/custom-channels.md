@@ -11,11 +11,10 @@ conda-self uses your configured channels for all operations. Use
 conda config --add channels my-channel -n base
 ```
 
-On conda 26.11.0 or later, install the plugin into base. Add
-`--override-frozen` if you intend to modify a protected base environment.
+On conda 26.11.0 or later, install the plugin into base.
 
 ```bash
-conda plugins install --name base my-plugin
+conda plugins install -n base my-plugin
 ```
 
 On older conda versions, use `conda self install my-plugin`. That command
@@ -55,5 +54,5 @@ conda config --add channels conda-forge -n base
 conda config --add channels my-company-channel -n base
 
 # my-company-channel has higher priority (added last)
-conda plugins install --name base my-plugin
+conda plugins install -n base my-plugin
 ```

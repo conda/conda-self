@@ -25,8 +25,8 @@ def test_help(conda_cli: CondaCLIFixture):
     assert exc.value.code == 0
     help_text = " ".join(out.split())
     assert "pending deprecation" in help_text.lower()
-    assert "conda plugins install --name base" in help_text
-    assert "--override-frozen" in help_text
+    assert "conda plugins install -n base" in help_text
+    assert "--override-frozen" not in help_text
 
 
 def test_install_plugin_dry_run(
@@ -79,7 +79,7 @@ def test_install_forwards_options(
     specs = ["conda-build>=26", "conda-pack"]
     with pytest.warns(
         PendingDeprecationWarning,
-        match=r"conda plugins install --name base.*--override-frozen",
+        match=r"conda plugins install -n base",
     ):
         out, _, code = conda_cli(
             "self",
@@ -99,19 +99,23 @@ def test_install_forwards_options(
     assert json.loads(out) == {"success": True}
     run.assert_called_once()
     (command,) = run.call_args.args
-    subcommand = ["plugins", "install"] if has_install else ["install"]
-    assert command[: 3 + len(subcommand)] == [
+    if has_install:
+        invocation = ["plugins", "install", "-n", "base"]
+        assert "--override-frozen" not in command
+        assert f"--prefix={sys.prefix}" not in command
+    else:
+        invocation = ["install", f"--prefix={sys.prefix}"]
+        assert "--override-frozen" in command
+    assert command[: 3 + len(invocation)] == [
         sys.executable,
         "-m",
         "conda",
-        *subcommand,
+        *invocation,
     ]
     assert command[-len(specs) :] == specs
     assert command[command.index("--console") + 1] == "classic"
     assert command.count("--verbose") == 2
     for flag in (
-        f"--prefix={sys.prefix}",
-        "--override-frozen",
         "--update-specs",
         "--force-reinstall",
         "--yes",
@@ -139,7 +143,8 @@ def test_native_install_preserves_prompt_and_exit_code(
     assert code == returncode
     run.assert_called_once()
     (command,) = run.call_args.args
-    assert command[3:5] == ["plugins", "install"]
+    assert command[3:7] == ["plugins", "install", "-n", "base"]
+    assert "--override-frozen" not in command
     assert "--yes" not in command
 
 
@@ -265,14 +270,22 @@ def test_install_plugin(
     conda_channel: str,
 ):
     monkeypatch.setenv("CONDA_CHANNELS", conda_channel)
-    (base_env / PREFIX_FROZEN_FILE).touch()
+    marker = base_env / PREFIX_FROZEN_FILE
+    marker.write_text(json.dumps({"message": "Frozen for maintenance"}))
 
     assert not is_installed(base_env, "conda-build")
-    conda_cli_subprocess(
-        base_env,
-        "self",
-        "install",
-        "--yes",
-        "conda-build",
+    native_help = conda_cli_subprocess(
+        base_env, "plugins", "install", "--help", capture_output=True, check=False
     )
+    args = ("self", "install", "--yes", "conda-build")
+    if native_help.returncode == 0:
+        result = conda_cli_subprocess(
+            base_env, *args, "--json", capture_output=True, text=True, check=False
+        )
+        assert result.returncode != 0
+        assert "Frozen for maintenance" in json.loads(result.stdout)["error"]
+        assert not is_installed(base_env, "conda-build")
+        marker.unlink()
+
+    conda_cli_subprocess(base_env, *args)
     assert is_installed(base_env, "conda-build")

@@ -496,9 +496,7 @@ def test_fix_without_exportable_snapshot(
 
     assert frozen_message == base_protection.BASE_PROTECTION_FROZEN_MESSAGE
     assert "conda self --help" in rendered_error
-    assert (
-        "conda plugins install --name base --override-frozen PACKAGE" in rendered_error
-    )
+    assert "conda plugins install -n base PACKAGE" in rendered_error
 
 
 def test_health_check_registered():

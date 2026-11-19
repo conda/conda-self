@@ -11,25 +11,21 @@ All commands are available as `conda self <cmd>`.
 explicit environment name targets base even when another environment is active.
 
 ```bash
-conda plugins install --name base conda-index
-
-# To install into a protected base environment
-conda plugins install --name base --override-frozen conda-index
+conda plugins install -n base conda-index
 ```
 
-A plugin installation can also change dependencies in base. The native
-command checks the target's frozen marker just as `conda install` does.
-`--override-frozen` allows this transaction and leaves the marker in place.
-
-The protected-base example also applies when your installer froze base.
-The command is included in conda 26.11.0 and later. Installing conda-self
-is optional.
+A plugin installation can also change dependencies in base. If base is frozen,
+conda versions with the interactive freeze prompt show the reason and ask for
+permission to proceed. Press Enter to decline. Versions without the prompt
+report a frozen-environment error. See
+[conda/conda#17013](https://github.com/conda/conda/pull/17013).
 
 During the deprecation period, existing `conda self install` calls still
-target the running conda installation and supply the override. The wrapper
-delegates to native conda when available. On older versions it checks for a
-`conda` entry point after installation and removes requested packages that
-fail the check. Their dependencies may remain installed.
+target the running conda installation. The wrapper leaves the freeze check
+to `conda plugins install` when available. On older versions it passes the
+freeze override to `conda install` when supported, then checks for a `conda`
+entry point after installation and removes requested packages that fail the
+check. Their dependencies may remain installed.
 
 ```
 conda self install <specs>... [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
@@ -46,7 +42,8 @@ conda self install <specs>... [--force-reinstall] [--dry-run] [--yes] [--json] [
 : Show what would be installed without making changes.
 
 `--yes`
-: Skip confirmation prompts.
+: Skip the package transaction prompt. If base is frozen, a native plugin
+  install with `--yes` exits with a freeze error.
 
 `--json`
 : Output in JSON format.

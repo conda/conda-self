@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import argparse
 
-REPLACEMENT = "Use conda plugins install --name base with conda 26.11 or later."
-PROTECTED_BASE = "For a protected base environment, add --override-frozen."
+REPLACEMENT = "Use conda plugins install -n base with conda 26.11 or later."
 HELP = f"Install conda plugins in base (pending deprecation). {REPLACEMENT}"
 
 
@@ -14,7 +13,6 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     from conda.cli.helpers import add_output_and_prompt_options
 
     parser.description = HELP
-    parser.epilog = PROTECTED_BASE
     add_output_and_prompt_options(parser)
     parser.add_argument(
         "--force-reinstall",
@@ -35,7 +33,7 @@ def execute(args: argparse.Namespace) -> int:
     from ..install import install_specs_in_protected_env
 
     warnings.warn(
-        f"conda self install is pending deprecation. {REPLACEMENT} {PROTECTED_BASE}",
+        f"conda self install is pending deprecation. {REPLACEMENT}",
         PendingDeprecationWarning,
         stacklevel=2,
     )

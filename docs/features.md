@@ -28,7 +28,7 @@ This:
    marker file
 
 Regular conda commands refuse to modify the frozen base environment unless
-`--override-frozen` is passed. `conda self install`, `update`, and `remove` pass
+`--override-frozen` is passed. `conda self update` and `conda self remove` pass
 that option to conda.
 
 ### Checking protection status
@@ -43,14 +43,13 @@ This reports whether base is currently protected.
 
 ### Install
 
-With conda 26.11.0 or later, install plugins in a protected base environment
-with the native command.
+With conda 26.11.0 or later, use the native command to install plugins in base.
 
 ```bash
-conda plugins install --name base --override-frozen conda-index
+conda plugins install -n base conda-index
 ```
 
-Omit `--override-frozen` when base is unprotected. On older conda versions,
+If base is frozen, conda handles the freeze check. On older conda versions,
 use `conda self install conda-index`.
 
 ### Update
