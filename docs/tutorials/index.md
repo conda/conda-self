@@ -1,17 +1,18 @@
 # Tutorials
 
-Step-by-step guides that walk you through common workflows from start
-to finish.
+Guided exercises for learning the distinction between your working
+environments and conda itself. Each tutorial includes commands you can follow
+and a recording of the same experience.
 
 ::::{grid} 1
 :gutter: 3
 
-:::{grid-item-card} {octicon}`shield-lock;1em` Protecting your base environment
-:link: protecting-base
+:::{grid-item-card} Quick start
+:link: ../quickstart
 :link-type: doc
 
-Set up base protection, understand what happens under the hood,
-and verify everything works.
+Install a project package, then update conda without changing your working
+environment.
 :::
 
 :::{grid-item-card} {octicon}`plug;1em` Managing plugins
@@ -28,5 +29,6 @@ base environment.
 :hidden:
 
 protecting-base
+../quickstart
 managing-plugins
 ```
