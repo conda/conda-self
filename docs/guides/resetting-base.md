@@ -125,10 +125,9 @@ the reset mode. [conda list](inv:conda:std:doc#commands/list) shows what is left
 in base. With conda 26.11.0 or later, you can reinstall a plugin by name.
 
 ```bash
-conda plugins install --name base conda-index
+conda plugins install -n base conda-index
 ```
 
-If base is protected, add `--override-frozen` for this installation.
 On older conda versions, use `conda self install conda-index`.
 
 Your `default` environment (created during base protection) is

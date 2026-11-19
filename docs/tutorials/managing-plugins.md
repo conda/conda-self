@@ -12,16 +12,15 @@ environment: installing, updating, and removing them.
 
 ## Install a plugin
 
-With conda 26.11.0 or later, target base by name. If the installer protected
-base or you protected it in the previous tutorial, add `--override-frozen`
-for this installation.
+Target base by name, even if another environment is active.
 
 ```bash
-conda plugins install --name base --override-frozen conda-index
+conda plugins install -n base conda-index
 ```
 
-Conda checks that the package provides a plugin before installing it. On
-older conda versions, use `conda self install conda-index`.
+Conda checks the freeze marker and verifies that the package provides a
+plugin before installing it. See the {doc}`../reference/cli` for freeze
+prompt details. On older conda versions, use `conda self install conda-index`.
 
 :::{dropdown} Watch an installation with the older command
 ![Installing a plugin with conda self install](../../demos/install-plugin.gif)
@@ -30,7 +29,7 @@ older conda versions, use `conda self install conda-index`.
 ### Multiple plugins at once
 
 ```bash
-conda plugins install --name base --override-frozen conda-index conda-spawn
+conda plugins install -n base conda-index conda-spawn
 ```
 
 ## Update plugins
@@ -85,7 +84,7 @@ before installing. To install plugins from a custom channel:
 conda config --add channels my-channel -n base
 
 # Then install
-conda plugins install --name base --override-frozen my-plugin
+conda plugins install -n base my-plugin
 ```
 
 Configuring the channel also makes it available to later updates. The older

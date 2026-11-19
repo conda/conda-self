@@ -63,8 +63,8 @@ installer snapshot when that file exists.
 
 The `conda-meta/frozen` environment marker file is written, marking base as
 frozen. Regular conda commands refuse to modify it unless `--override-frozen`
-is passed. `conda self install`, `update`, and `remove` pass that option to
-conda.
+is passed. `conda self update` and `conda self remove` pass that option to
+conda. For plugin installation, see {doc}`managing-plugins`.
 
 ## Verify protection
 

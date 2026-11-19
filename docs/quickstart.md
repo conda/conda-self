@@ -40,15 +40,15 @@ This does four things:
 (quickstart-install-plugin)=
 ## Install a plugin
 
-With conda 26.11.0 or later, install `conda-index` into the protected base
-environment. Conda checks that the package provides a plugin before
-installing it.
+With conda 26.11.0 or later, use the native command to install `conda-index`
+into base. Conda checks that the package provides a plugin before installing it.
 
 ```bash
-conda plugins install --name base --override-frozen conda-index
+conda plugins install -n base conda-index
 ```
 
-On older conda versions, use `conda self install conda-index`.
+For frozen base, see the {doc}`reference/cli` for the prompt and version
+details. On older conda versions, use `conda self install conda-index`.
 
 ## Update all installed packages
 
