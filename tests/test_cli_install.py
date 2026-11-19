@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import json
 import sys
-from subprocess import CompletedProcess
+from subprocess import PIPE, CompletedProcess
 from typing import TYPE_CHECKING
 
 import pytest
 from conda.base.constants import PREFIX_FROZEN_FILE
 from conda.exceptions import CondaValueError
 
+from conda_self.exceptions import NotAPluginError
 from conda_self.testing import conda_cli_subprocess, is_installed
 
 if TYPE_CHECKING:
@@ -66,9 +67,7 @@ def test_install_forwards_options(
     if has_plugins:
         modules[f"{plugins}.install"] = object() if has_install else None
     # Looking up a child of a missing package must fail.
-    mocker.patch(
-        "conda_self.cli.main_install.find_spec", side_effect=modules.__getitem__
-    )
+    mocker.patch("conda_self.install.find_spec", side_effect=modules.__getitem__)
     monkeypatch.setenv("CONDA_PREFIX", str(tmp_path))
 
     def report_success(command: list[str], **kwargs) -> CompletedProcess[str]:
@@ -128,7 +127,7 @@ def test_native_install_preserves_prompt_and_exit_code(
     monkeypatch: MonkeyPatch,
     mocker: MockerFixture,
 ):
-    mocker.patch("conda_self.cli.main_install.find_spec", return_value=object())
+    mocker.patch("conda_self.install.find_spec", return_value=object())
     monkeypatch.setenv("CONDA_ALWAYS_YES", "false")
     run = mocker.patch(
         "conda_self.install.run", return_value=CompletedProcess([], returncode)
@@ -140,6 +139,49 @@ def test_native_install_preserves_prompt_and_exit_code(
     (command,) = run.call_args.args
     assert command[3:5] == ["plugins", "install"]
     assert "--yes" not in command
+
+
+def test_failed_legacy_install_preserves_json_and_exit_code(
+    conda_cli: CondaCLIFixture,
+    mocker: MockerFixture,
+):
+    mocker.patch("conda_self.install.find_spec", return_value=None)
+    error = '{"error": "PackagesNotFoundError"}\n'
+    run = mocker.patch(
+        "conda_self.install.run", return_value=CompletedProcess([], 17, stdout=error)
+    )
+
+    out, _, code = conda_cli("self", "install", "--json", "missing-plugin")
+
+    assert code == 17
+    assert out == error
+    run.assert_called_once()
+
+
+def test_failed_legacy_rollback_reports_diagnostic_on_stderr(
+    conda_cli: CondaCLIFixture,
+    mocker: MockerFixture,
+):
+    mocker.patch("conda_self.install.find_spec", return_value=None)
+    mocker.patch("conda_self.validate.conda_plugin_packages", return_value=set())
+    diagnostic = "Cannot remove example-package\n"
+    run = mocker.patch(
+        "conda_self.install.run",
+        side_effect=[
+            CompletedProcess([], 0, stdout='{"success": true}\n'),
+            CompletedProcess([], 1, stdout=diagnostic),
+        ],
+    )
+
+    out, err, _ = conda_cli(
+        "self", "install", "--json", "example-package", raises=NotAPluginError
+    )
+
+    assert out == ""
+    assert diagnostic in err
+    install, rollback = run.call_args_list
+    assert install.kwargs["stdout"] == rollback.kwargs["stdout"] == PIPE
+    assert rollback.args[0][3] == "remove"
 
 
 @pytest.mark.parametrize(

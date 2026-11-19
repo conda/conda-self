@@ -17,12 +17,17 @@ conda plugins install --name base conda-index
 conda plugins install --name base --override-frozen conda-index
 ```
 
-`conda self install` still targets the running conda installation and passes
-`--override-frozen` for you. Where the native command is available, both
-commands check the requested packages before installing them. On older conda
-versions, `self install` checks for a `conda` entry point after installation
-and removes requested packages that fail the check. Their dependencies may
-remain installed.
+A plugin installation can also change dependencies in base. The native
+command checks the target's frozen marker just as `conda install` does.
+`--override-frozen` allows this transaction and leaves the marker in place.
+
+With conda-self installed, `conda self install conda-index` also works when
+your installer has already frozen base. It targets the running conda
+installation and passes `--override-frozen` for you. Where the native command
+is available, both commands check the requested packages before installing
+them. On older conda versions, `self install` checks for a `conda` entry
+point after installation and removes requested packages that fail the check.
+Their dependencies may remain installed.
 
 ```
 conda self install <specs>... [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]

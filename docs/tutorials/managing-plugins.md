@@ -11,8 +11,9 @@ environment: installing, updating, and removing them.
 
 ## Install a plugin
 
-With conda 26.11.0 or later, target base by name. Since you protected base
-in the previous tutorial, add `--override-frozen` to allow this install.
+With conda 26.11.0 or later, target base by name. If the installer protected
+base or you protected it in the previous tutorial, add `--override-frozen`
+for this installation.
 
 ```bash
 conda plugins install --name base --override-frozen conda-index
