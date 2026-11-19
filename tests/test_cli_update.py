@@ -73,7 +73,7 @@ def test_update_output_options(
 ) -> None:
     commands: list[list[str]] = []
 
-    def run(command: list[str]) -> CompletedProcess[str]:
+    def run(command: list[str], **kwargs) -> CompletedProcess[str]:
         commands.append(command)
         if expected_json is not None:
             print(json.dumps(expected_json))
@@ -129,7 +129,7 @@ def test_install_specs_update_flags(
 
     commands: list[list[str]] = []
 
-    def run(command: list[str]) -> CompletedProcess[str]:
+    def run(command: list[str], **kwargs) -> CompletedProcess[str]:
         commands.append(command)
         return CompletedProcess(command, 0)
 

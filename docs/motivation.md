@@ -85,22 +85,19 @@ live in named environments.
 
 ## Design choices
 
-Subprocess over in-process API
-: `conda self install` uses subprocess calls to [conda install](inv:conda:std:doc#commands/install)
-  rather than the in-process Solver API. This ensures frozen
-  environment protection (which lives in conda's CLI layer) is
-  always respected. It also means all of conda's safety checks,
-  channel resolution, and reporting work exactly as users expect.
-  See [issue #15](https://github.com/conda/conda-self/issues/15)
-  for the discussion that led to this decision.
+Plugin installation
+: `conda self install` runs conda in a subprocess so the transaction uses
+  the CLI's frozen-environment and channel settings.
+  See [issue #15](https://github.com/conda/conda-self/issues/15) for the
+  original design discussion.
 
-Plugin validation after install
-: Rather than pre-validating packages (which would require
-  maintaining a list of known plugins), conda-self installs first
-  and then checks `importlib.metadata` entry points. If the package
-  is not a conda plugin, conda-self uninstalls the requested package. Packages
-  installed as its dependencies may remain. Validation works with third-party
-  plugins without maintaining an allowlist.
+  Conda 26.11.0 introduces `conda plugins install`, which checks requested
+  packages before changing the environment. Using that command in
+  `conda self install` avoids installing and then removing a package simply to
+  discover whether it provides a plugin. On older conda versions, conda-self
+  still calls [conda install](inv:conda:std:doc#commands/install), checks the
+  installed entry points, and removes requested packages that fail validation.
+  Their dependencies may remain installed.
 
 Snapshot-based recovery
 : Snapshots use conda's explicit format and contain an `@EXPLICIT` marker

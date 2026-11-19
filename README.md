@@ -18,29 +18,38 @@ options:
 
 subcommands:
   {install,remove,reset,update}
-    install             Install conda plugins in the base environment.
+    install             Install conda plugins in base (pending deprecation).
+                        Use conda plugins install --name base with conda 26.11
+                        or later.
     remove              Remove conda plugins from the base environment.
     reset               Reset the base environment.
     update              Update conda, one conda plugin, or all packages in the
                         base environment.
 ```
 
+### Installing plugins
+
+With conda 26.11.0 or later, install plugins directly into base.
+
+```bash
+conda plugins install --name base conda-index
+```
+
+If you have protected base, add `--override-frozen` for that installation.
+On older conda versions, use `conda self install conda-index`.
+
 ### Custom channels
 
-`conda self install` and `conda self update` use your configured channels.
-To install plugins from a custom channel (e.g. a company or community channel
-on anaconda.org or prefix.dev), add it to your configuration first:
+To use a custom channel for both plugin installation and later updates, add
+it to your configuration before installing the plugin.
 
 ```
 conda config --add channels my-channel -n base
-conda self install my-plugin
+conda plugins install --name base my-plugin
 ```
 
-This keeps channel configuration consistent across install, update, and
-dependency resolution.
-
-Channel-qualified package specs (e.g. `conda-forge::my-plugin`) are not
-supported and will result in an error.
+The older `conda self install` command rejects channel-qualified package
+specs such as `conda-forge::my-plugin`.
 
 ## Base Environment Protection
 

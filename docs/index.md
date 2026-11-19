@@ -13,14 +13,15 @@ frozen so regular conda commands refuse to modify it unless
 
 ## Quick example
 
-![Protect base, install a plugin, update, reset](../demos/quickstart.gif)
+The plugin installation command below requires conda 26.11.0 or later.
+On older conda versions, use `conda self install conda-index`.
 
 ```bash
 # Protect your base environment
 $ conda doctor -n base base-protection --fix
 
-# Install a plugin safely
-$ conda self install conda-index
+# Install a plugin in the protected base environment
+$ conda plugins install --name base --override-frozen conda-index
 
 # Update all installed packages
 $ conda self update --all
@@ -32,6 +33,10 @@ $ conda self remove conda-index
 $ conda self reset
 ```
 
+:::{dropdown} Watch the quick start with the older install command
+![Quick start with conda self install](../demos/quickstart.gif)
+:::
+
 ## What it does
 
 `conda self` keeps your base environment minimal and stable:
@@ -39,9 +44,9 @@ $ conda self reset
 1. **Base protection** -- `conda doctor -n base base-protection --fix` clones
    base to `default`, removes conda packages not retained by base protection,
    and marks it as frozen
-2. **Plugin management** -- `conda self install`, `update`, and `remove`
-   use `--override-frozen` to manage plugins through subprocess calls that
-   respect all of conda's safety checks
+2. **Plugin management** -- `conda self update` and `conda self remove`
+   maintain plugins in protected base. For installation, use
+   `conda plugins install` when available
 3. **Reset** -- `conda self reset` restores base from an installer or
    base-protection snapshot, or removes conda packages not retained by `current`
 
