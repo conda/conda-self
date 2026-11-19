@@ -73,7 +73,7 @@ def test_update_output_options(
 ) -> None:
     commands: list[list[str]] = []
 
-    def run(command: list[str]) -> CompletedProcess[str]:
+    def run(command: list[str], **kwargs) -> CompletedProcess[str]:
         commands.append(command)
         if expected_json is not None:
             print(json.dumps(expected_json))
@@ -97,22 +97,25 @@ def test_update_output_options(
 
 
 @pytest.mark.parametrize(
-    ("kwargs", "expected_flag", "unexpected_flags"),
+    ("update_dependencies", "update_all", "expected_flag", "unexpected_flags"),
     (
         pytest.param(
-            {"update_dependencies": True},
+            True,
+            False,
             "--update-deps",
             ("--update-specs", "--all"),
             id="update-deps",
         ),
         pytest.param(
-            {"update_all": True},
+            False,
+            True,
             "--all",
             ("--update-specs", "--update-deps"),
             id="all",
         ),
         pytest.param(
-            {},
+            False,
+            False,
             "--update-specs",
             ("--update-deps", "--all"),
             id="update-specs",
@@ -120,7 +123,8 @@ def test_update_output_options(
     ),
 )
 def test_install_specs_update_flags(
-    kwargs: dict[str, bool],
+    update_dependencies: bool,
+    update_all: bool,
     expected_flag: str,
     unexpected_flags: tuple[str, ...],
     monkeypatch: MonkeyPatch,
@@ -129,13 +133,16 @@ def test_install_specs_update_flags(
 
     commands: list[list[str]] = []
 
-    def run(command: list[str]) -> CompletedProcess[str]:
+    def run(command: list[str], **kwargs) -> CompletedProcess[str]:
         commands.append(command)
         return CompletedProcess(command, 0)
 
     monkeypatch.setattr("conda_self.install.run", run)
 
-    assert install_specs_in_protected_env(["conda"], **kwargs) == 0
+    code = install_specs_in_protected_env(
+        ["conda"], update_dependencies=update_dependencies, update_all=update_all
+    )
+    assert code == 0
     assert expected_flag in commands[0]
     for flag in unexpected_flags:
         assert flag not in commands[0]
