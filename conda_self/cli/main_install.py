@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import sys
+from importlib.util import find_spec
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import argparse
-
-    from conda.models.match_spec import MatchSpec
 
 REPLACEMENT = "Use conda plugins install --name base with conda 26.11 or later."
 HELP = f"Install conda plugins in base (pending deprecation). {REPLACEMENT}"
@@ -28,16 +27,6 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("specs", nargs="+", help="Conda plugins to install")
     parser.set_defaults(func=execute)
-
-
-def _has_native_plugins_install() -> bool:
-    from importlib.util import find_spec
-
-    package = "conda.plugins.subcommands.plugins"
-    # Older conda versions lack the parent package, or provide only list and info.
-    return (
-        find_spec(package) is not None and find_spec(f"{package}.install") is not None
-    )
 
 
 def execute(args: argparse.Namespace) -> int:
@@ -64,7 +53,6 @@ def execute(args: argparse.Namespace) -> int:
             "Configure channels via `conda config --add channels <channel>` instead."
         )
 
-    native = _has_native_plugins_install()
     if not context.json and not context.quiet:
         print("Installing packages:", *args.specs, flush=True)
 
@@ -75,10 +63,15 @@ def execute(args: argparse.Namespace) -> int:
         options.extend(("--console", args.console))
     options.extend(["--verbose"] * context.verbosity)
 
+    # Older conda versions may lack the parent package or only provide list and info.
+    plugins_package = "conda.plugins.subcommands.plugins"
+    native_install = find_spec(plugins_package) and find_spec(
+        f"{plugins_package}.install"
+    )
     # Hold legacy install output until we know which JSON result to report.
-    validate_after_install = not native and not context.dry_run
+    validate_after_install = not native_install and not context.dry_run
     result = run_in_protected_env(
-        ("plugins", "install") if native else ("install",),
+        ("plugins", "install") if native_install else ("install",),
         [*options, "--", *args.specs],
         dry_run=context.dry_run,
         json=context.json,
@@ -87,31 +80,28 @@ def execute(args: argparse.Namespace) -> int:
         capture_stdout=context.json and validate_after_install,
     )
     if result.returncode == 0 and validate_after_install:
-        _validate_installed_plugins(specs_to_add)
+        from ..exceptions import NotAPluginError
+        from ..validate import (
+            conda_plugin_packages,
+            normalize_plugin_name,
+            reload_plugin_packages,
+        )
+
+        reload_plugin_packages()
+        plugin_names = conda_plugin_packages()
+        invalid_names = [
+            spec.name
+            for spec in specs_to_add
+            if normalize_plugin_name(spec.name) not in plugin_names
+        ]
+        if invalid_names:
+            cleanup = run_in_protected_env(
+                ("remove",), invalid_names, yes=True, capture_stdout=context.json
+            )
+            if cleanup.returncode and cleanup.stdout:
+                sys.stderr.write(cleanup.stdout)
+            raise NotAPluginError(invalid_names)
+
     if result.stdout is not None:
         sys.stdout.write(result.stdout)
     return result.returncode
-
-
-def _validate_installed_plugins(specs_to_add: list[MatchSpec]) -> None:
-    from conda.base.context import context
-
-    from ..exceptions import NotAPluginError
-    from ..install import run_in_protected_env
-    from ..validate import conda_plugin_packages, reload_plugin_packages
-
-    reload_plugin_packages()
-    plugin_names = conda_plugin_packages()
-    invalid_names = [
-        spec.name
-        for spec in specs_to_add
-        if spec.name.lower().replace("_", "-") not in plugin_names
-    ]
-
-    if invalid_names:
-        cleanup = run_in_protected_env(
-            ("remove",), invalid_names, yes=True, capture_stdout=context.json
-        )
-        if cleanup.returncode and cleanup.stdout:
-            sys.stderr.write(cleanup.stdout)
-        raise NotAPluginError(invalid_names)

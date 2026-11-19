@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
     from conda.testing.fixtures import CondaCLIFixture
     from pytest import MonkeyPatch
+    from pytest_mock import MockerFixture
 
 
 def test_help(conda_cli: CondaCLIFixture):
@@ -44,25 +45,37 @@ def test_install_plugin_dry_run(
     assert json.loads(result.stdout)["success"]
 
 
-@pytest.mark.parametrize("native", (False, True), ids=("legacy", "native"))
+@pytest.mark.parametrize(
+    ("has_plugins", "has_install"),
+    (
+        pytest.param(False, False, id="no-plugins-command"),
+        pytest.param(True, False, id="plugins-without-install"),
+        pytest.param(True, True, id="plugins-with-install"),
+    ),
+)
 def test_install_forwards_options(
-    native: bool,
+    has_plugins: bool,
+    has_install: bool,
+    mocker: MockerFixture,
     conda_cli: CondaCLIFixture,
     monkeypatch: MonkeyPatch,
     tmp_path: Path,
 ):
-    monkeypatch.setattr(
-        "conda_self.cli.main_install._has_native_plugins_install", lambda: native
+    plugins = "conda.plugins.subcommands.plugins"
+    modules = {plugins: object() if has_plugins else None}
+    if has_plugins:
+        modules[f"{plugins}.install"] = object() if has_install else None
+    # Looking up a child of a missing package must fail.
+    mocker.patch(
+        "conda_self.cli.main_install.find_spec", side_effect=modules.__getitem__
     )
     monkeypatch.setenv("CONDA_PREFIX", str(tmp_path))
-    commands: list[list[str]] = []
 
-    def run(command: list[str], **kwargs) -> CompletedProcess[str]:
-        commands.append(command)
+    def report_success(command: list[str], **kwargs) -> CompletedProcess[str]:
         print('{"success": true}')
         return CompletedProcess(command, 0)
 
-    monkeypatch.setattr("conda_self.install.run", run)
+    run = mocker.patch("conda_self.install.run", side_effect=report_success)
     specs = ["conda-build>=26", "conda-pack"]
     with pytest.warns(
         PendingDeprecationWarning, match="conda plugins install --name base"
@@ -83,8 +96,9 @@ def test_install_forwards_options(
 
     assert code == 0
     assert json.loads(out) == {"success": True}
-    (command,) = commands
-    subcommand = ["plugins", "install"] if native else ["install"]
+    run.assert_called_once()
+    (command,) = run.call_args.args
+    subcommand = ["plugins", "install"] if has_install else ["install"]
     assert command[: 3 + len(subcommand)] == [
         sys.executable,
         "-m",
@@ -112,22 +126,18 @@ def test_native_install_preserves_prompt_and_exit_code(
     returncode: int,
     conda_cli: CondaCLIFixture,
     monkeypatch: MonkeyPatch,
+    mocker: MockerFixture,
 ):
-    monkeypatch.setattr(
-        "conda_self.cli.main_install._has_native_plugins_install", lambda: True
-    )
+    mocker.patch("conda_self.cli.main_install.find_spec", return_value=object())
     monkeypatch.setenv("CONDA_ALWAYS_YES", "false")
-    commands: list[list[str]] = []
-
-    def run(command: list[str], **kwargs) -> CompletedProcess[str]:
-        commands.append(command)
-        return CompletedProcess(command, returncode)
-
-    monkeypatch.setattr("conda_self.install.run", run)
+    run = mocker.patch(
+        "conda_self.install.run", return_value=CompletedProcess([], returncode)
+    )
     _, _, code = conda_cli("self", "install", "example-plugin")
 
     assert code == returncode
-    (command,) = commands
+    run.assert_called_once()
+    (command,) = run.call_args.args
     assert command[3:5] == ["plugins", "install"]
     assert "--yes" not in command
 
