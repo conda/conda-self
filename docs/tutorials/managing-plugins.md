@@ -6,7 +6,8 @@ environment: installing, updating, and removing them.
 
 ## Prerequisites
 
-- conda-self installed in base (`conda install -n base conda-self`)
+- conda 26.11.0 or later for native plugin installation
+- conda-self installed in base for the update and remove steps
 - Base environment protected (see {doc}`protecting-base`)
 
 ## Install a plugin

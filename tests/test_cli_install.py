@@ -26,6 +26,7 @@ def test_help(conda_cli: CondaCLIFixture):
     help_text = " ".join(out.split())
     assert "pending deprecation" in help_text.lower()
     assert "conda plugins install --name base" in help_text
+    assert "--override-frozen" in help_text
 
 
 def test_install_plugin_dry_run(
@@ -77,7 +78,8 @@ def test_install_forwards_options(
     run = mocker.patch("conda_self.install.run", side_effect=report_success)
     specs = ["conda-build>=26", "conda-pack"]
     with pytest.warns(
-        PendingDeprecationWarning, match="conda plugins install --name base"
+        PendingDeprecationWarning,
+        match=r"conda plugins install --name base.*--override-frozen",
     ):
         out, _, code = conda_cli(
             "self",

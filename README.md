@@ -35,7 +35,7 @@ With conda 26.11.0 or later, install plugins directly into base.
 conda plugins install --name base conda-index
 ```
 
-If you have protected base, add `--override-frozen` for that installation.
+If you or your installer froze base, add `--override-frozen` for that installation.
 On older conda versions, use `conda self install conda-index`.
 
 ### Custom channels
