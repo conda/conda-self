@@ -18,7 +18,7 @@ def install_command_to_run(
     yes: bool = False,
     quiet: bool = False,
 ) -> list[str]:
-    """Build the full `conda install` command (with correct flags) for the protected base env."""
+    """Build the `conda install` command for the protected base env."""
     if update_all:
         update_flag = "--all"
     elif update_dependencies:

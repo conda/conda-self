@@ -154,7 +154,8 @@ def check_solved_channel_changes(
         )
         for change in moved:
             print(
-                f"  {change.name}: {change.installed_channel} -> {change.planned_channel}",
+                f"  {change.name}: "
+                f"{change.installed_channel} -> {change.planned_channel}",
                 file=sys.stderr,
             )
 
@@ -166,7 +167,8 @@ def check_solved_channel_changes(
         )
         for change in unknown:
             print(
-                f"  {change.name}: {change.installed_channel} -> {change.planned_channel}",
+                f"  {change.name}: "
+                f"{change.installed_channel} -> {change.planned_channel}",
                 file=sys.stderr,
             )
 
@@ -195,4 +197,3 @@ def check_solved_channel_changes(
         confirm_yn("Proceed with changing package channels", default="no")
     except CondaSystemExit as exc:
         raise CondaExitZero(str(exc)) from exc
-
