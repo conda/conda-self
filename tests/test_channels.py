@@ -2,6 +2,7 @@ import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from types import SimpleNamespace
+from typing import TypedDict
 
 import pytest
 from conda import CondaExitZero
@@ -185,6 +186,13 @@ def moved_package_pair() -> tuple[tuple[PrefixRecord, ...], tuple[PrefixRecord, 
     )
 
 
+class HookContextKwargs(TypedDict, total=False):
+    dry_run: bool
+    json: bool
+    always_yes: bool
+    console: str
+
+
 @contextmanager
 def hook_context(
     *,
@@ -300,7 +308,7 @@ def test_hook_warns_and_proceeds_on_dry_run(
 def test_hook_refuses_channel_changes_without_interactive_confirmation(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
-    context_kwargs: dict[str, bool | str],
+    context_kwargs: HookContextKwargs,
     terminal_is_tty: bool,
 ) -> None:
     monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
