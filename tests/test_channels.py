@@ -35,7 +35,7 @@ def test_detects_channel_change() -> None:
         ChannelChange(
             name="conda",
             installed_channel="https://conda.anaconda.org/conda-forge",
-            planned_channel="pkgs/main",
+            planned_channel="https://repo.anaconda.com/pkgs/main",
         )
     ]
 
@@ -81,14 +81,17 @@ def test_warns_when_installed_channel_alias_has_migrated(
             url=f"{channel}/osx-arm64/{fn}",
         )
 
-    check_solved_channel_changes(
-        "repodata.json",
-        (record("old.example", "1.0"),),
-        (record("new.example", "2.0"),),
-    )
-    warning = capsys.readouterr().err
-    assert "old.example" in warning
-    assert "new.example" in warning
+    try:
+        check_solved_channel_changes(
+            "repodata.json",
+            (record("old.example", "1.0"),),
+            (record("new.example", "2.0"),),
+        )
+        warning = capsys.readouterr().err
+        assert "old.example" in warning
+        assert "new.example" in warning
+    finally:
+        reset_context()
 
 
 def test_channel_url_and_channel_name_are_equivalent() -> None:
@@ -110,7 +113,7 @@ def test_unknown_channel_requires_consent() -> None:
         ChannelChange(
             name="conda",
             installed_channel="<unknown>",
-            planned_channel="pkgs/main",
+            planned_channel="https://repo.anaconda.com/pkgs/main",
         )
     ]
 
@@ -168,7 +171,7 @@ def test_only_the_package_that_moves_is_reported() -> None:
         ChannelChange(
             name="conda",
             installed_channel="https://repo.anaconda.com/pkgs/main",
-            planned_channel="conda-forge",
+            planned_channel="https://conda.anaconda.org/conda-forge",
         )
     ]
 
