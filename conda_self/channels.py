@@ -173,20 +173,26 @@ def check_solved_channel_changes(
     if os.environ.get("CONDA_SELF_ALLOW_CHANNEL_CHANGES") == "1":
         return  # opted in: warn only
 
+    from conda import CondaExitZero
+    from conda.base.constants import DEFAULT_CONSOLE_REPORTER_BACKEND
     from conda.base.context import context
+    from conda.exceptions import CondaSystemExit
+    from conda.reporters import confirm_yn
 
     if context.dry_run:
         return
-    if context.json or context.always_yes or not sys.stdin.isatty():
+    if (
+        context.always_yes
+        or not sys.stdin.isatty()
+        or context.console != DEFAULT_CONSOLE_REPORTER_BACKEND
+    ):
         raise CondaValueError(
             "Refusing to move packages to a different channel in "
             "non-interactive mode. Pass --allow-channel-changes to proceed."
         )
 
-    from conda.reporters import confirm_yn
+    try:
+        confirm_yn("Proceed with changing package channels", default="no")
+    except CondaSystemExit as exc:
+        raise CondaExitZero(str(exc)) from exc
 
-    confirm_yn(
-        "Proceed with changing package channels?[y/n]:\n",
-        default="no",
-        dry_run=context.dry_run,
-    )

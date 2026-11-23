@@ -4,7 +4,8 @@ from contextlib import contextmanager
 from types import SimpleNamespace
 
 import pytest
-from conda.exceptions import CondaValueError
+from conda import CondaExitZero
+from conda.exceptions import CondaSystemExit, CondaValueError
 from conda.models.channel import Channel
 from conda.models.records import PrefixRecord
 
@@ -186,14 +187,13 @@ def moved_package_pair() -> tuple[tuple[PrefixRecord, ...], tuple[PrefixRecord, 
 
 @contextmanager
 def hook_context(
-    *, dry_run: bool = False, json: bool = False, always_yes: bool = False
+    *,
+    dry_run: bool = False,
+    json: bool = False,
+    always_yes: bool = False,
+    console: str | None = None,
 ) -> Iterator[None]:
-    """Drive gate-relevant context flags via CONDA_* env vars + reset_context.
-
-    Same approach as other tests (e.g. CONDA_CHANNELS): never assign
-    ``context.dry_run`` / ``json`` / ``always_yes`` directly — that leaves
-    instance attributes which shadow later CLI parsing in other tests.
-    """
+    """Drive gate-relevant context flags via CONDA_* env vars + reset_context."""
     from conda.base.context import reset_context
 
     env_flags = {
@@ -202,12 +202,17 @@ def hook_context(
         "CONDA_ALWAYS_YES": always_yes,
     }
     previous = {name: os.environ.get(name) for name in env_flags}
+    previous_console = os.environ.get("CONDA_CONSOLE")
     try:
         for name, enabled in env_flags.items():
             if enabled:
                 os.environ[name] = "true"
             else:
                 os.environ.pop(name, None)
+        if console is None:
+            os.environ.pop("CONDA_CONSOLE", None)
+        else:
+            os.environ["CONDA_CONSOLE"] = console
         reset_context()
         yield
     finally:
@@ -216,6 +221,10 @@ def hook_context(
                 os.environ.pop(name, None)
             else:
                 os.environ[name] = value
+        if previous_console is None:
+            os.environ.pop("CONDA_CONSOLE", None)
+        else:
+            os.environ["CONDA_CONSOLE"] = previous_console
         reset_context()
 
 
@@ -283,6 +292,7 @@ def test_hook_warns_and_proceeds_on_dry_run(
     ("context_kwargs", "terminal_is_tty"),
     (
         pytest.param({"json": True}, True, id="json-output"),
+        pytest.param({"console": "json"}, True, id="console-json"),
         pytest.param({"always_yes": True}, True, id="always-yes"),
         pytest.param({}, False, id="no-terminal"),
     ),
@@ -290,7 +300,7 @@ def test_hook_warns_and_proceeds_on_dry_run(
 def test_hook_refuses_channel_changes_without_interactive_confirmation(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
-    context_kwargs: dict[str, bool],
+    context_kwargs: dict[str, bool | str],
     terminal_is_tty: bool,
 ) -> None:
     monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
@@ -322,4 +332,24 @@ def test_hook_asks_for_confirmation_on_a_terminal(
         check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
 
     assert len(prompts) == 1
+    assert "Warning" in capsys.readouterr().err
+
+
+def test_hook_exits_cleanly_when_user_declines(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
+    monkeypatch.delenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", raising=False)
+    set_terminal(monkeypatch, is_tty=True)
+
+    def decline(message, **kwargs):
+        raise CondaSystemExit("Operation aborted.  Exiting.")
+
+    monkeypatch.setattr("conda.reporters.confirm_yn", decline)
+    unlink_precs, link_precs = moved_package_pair()
+
+    with hook_context():
+        with pytest.raises(CondaExitZero):
+            check_solved_channel_changes("repodata.json", unlink_precs, link_precs)
+
     assert "Warning" in capsys.readouterr().err
