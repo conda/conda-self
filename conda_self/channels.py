@@ -36,14 +36,21 @@ def normalize_channel(channel: object) -> str | None:
     raw_channel = str(channel).strip()
     if raw_channel in ("", "<unknown>", "unknown"):
         return None
-    parsed_channel = Channel(raw_channel)
-    # 'defaults' expands to pkgs/main, pkgs/r, ... — treat that family as one
-    # channel *per host*, so a mirror move still counts as a change.
-    if parsed_channel.canonical_name == "defaults":
-        if parsed_channel.location:
-            return f"defaults@{parsed_channel.location}"
-        return "defaults"
-    return parsed_channel.base_url or parsed_channel.canonical_name or raw_channel
+    return Channel(raw_channel).base_url
+
+
+def same_channel_url(old_url: str, new_url: str) -> bool:
+    from urllib.parse import urlsplit
+
+    if old_url == new_url:
+        return True
+
+    defaults = Channel("defaults").base_urls
+    if old_url not in defaults or new_url not in defaults:
+        return False
+
+    old, new = urlsplit(old_url), urlsplit(new_url)
+    return bool(old.netloc) and old.scheme == new.scheme and old.netloc == new.netloc
 
 
 def find_channel_changes(
@@ -72,24 +79,21 @@ def find_channel_changes(
         if name not in installed_by_name:
             continue  # newly installed package: out of scope for the ticket
         planned_raw_channel = package.get("channel") or package.get("base_url")
-        planned_normalized_channel = normalize_channel(planned_raw_channel)
-        installed_raw_channel, installed_normalized_channel = installed_by_name[name]
-        planned_display = (
-            str(planned_raw_channel) if planned_raw_channel is not None else "<unknown>"
-        )
-
+        planned_url = normalize_channel(planned_raw_channel)
+        installed_display, installed_url = installed_by_name[name]
         if (
-            installed_normalized_channel is None
-            or planned_normalized_channel is None
-            or planned_normalized_channel != installed_normalized_channel
+            installed_url
+            and planned_url
+            and same_channel_url(installed_url, planned_url)
         ):
-            changes.append(
-                ChannelChange(
-                    name=name,
-                    installed_channel=installed_raw_channel,
-                    planned_channel=planned_display,
-                )
+            continue
+        changes.append(
+            ChannelChange(
+                name=name,
+                installed_channel=installed_display if installed_url else "<unknown>",
+                planned_channel=str(planned_raw_channel) if planned_url else "<unknown>",
             )
+        )
     return sorted(changes, key=lambda change: change.name)
 
 

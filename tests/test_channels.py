@@ -60,6 +60,37 @@ def test_moving_defaults_to_a_different_host_is_a_change() -> None:
     ]
 
 
+def test_warns_when_installed_channel_alias_has_migrated(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from conda.base.context import reset_context
+
+    monkeypatch.setenv("CONDA_CHANNEL_ALIAS", "https://new.example/conda")
+    monkeypatch.setenv("CONDA_MIGRATED_CHANNEL_ALIASES", "https://old.example/conda")
+    monkeypatch.setenv("CONDA_SELF_CHECK_CHANNEL_CHANGES", "1")
+    monkeypatch.setenv("CONDA_SELF_ALLOW_CHANNEL_CHANGES", "1")
+    reset_context(())
+
+    def record(host: str, version: str) -> PrefixRecord:
+        channel = f"https://{host}/conda/team"
+        fn = f"conda-{version}-0.conda"
+        return PrefixRecord.from_objects(
+            installed_package("conda", channel),
+            version=version,
+            fn=fn,
+            url=f"{channel}/osx-arm64/{fn}",
+        )
+
+    check_solved_channel_changes(
+        "repodata.json",
+        (record("old.example", "1.0"),),
+        (record("new.example", "2.0"),),
+    )
+    warning = capsys.readouterr().err
+    assert "old.example" in warning
+    assert "new.example" in warning
+
+
 def test_channel_url_and_channel_name_are_equivalent() -> None:
     installed = [installed_package("conda", "https://conda.anaconda.org/conda-forge")]
     planned = [{"name": "conda", "channel": "conda-forge"}]
