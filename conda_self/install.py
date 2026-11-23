@@ -57,11 +57,7 @@ def install_specs_in_protected_env(
         env = {
             **os.environ,
             "CONDA_SELF_CHECK_CHANNEL_CHANGES": "1",
-            **(
-                {"CONDA_SELF_ALLOW_CHANNEL_CHANGES": "1"}
-                if allow_channel_changes
-                else {}
-            ),
+            "CONDA_SELF_ALLOW_CHANNEL_CHANGES": "1" if allow_channel_changes else "0",
         }
     command = install_command_to_run(
         specs,
