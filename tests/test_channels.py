@@ -1,7 +1,7 @@
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from types import SimpleNamespace
-from typing import Iterator
 
 import pytest
 from conda.exceptions import CondaValueError

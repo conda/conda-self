@@ -26,7 +26,10 @@ def install_command_to_run(
     else:
         update_flag = "--update-specs"
     return [
-        sys.executable, "-m", "conda", "install",
+        sys.executable,
+        "-m",
+        "conda",
+        "install",
         f"--prefix={sys.prefix}",
         *(("--override-frozen",) if hasattr(context, "protect_frozen_envs") else ()),
         *(("--force-reinstall",) if force_reinstall else ()),
@@ -37,6 +40,7 @@ def install_command_to_run(
         update_flag,
         *specs,
     ]
+
 
 def install_specs_in_protected_env(
     specs: list[str],
@@ -71,6 +75,7 @@ def install_specs_in_protected_env(
     )
     return run(command, env=env).returncode
 
+
 def uninstall_specs_in_protected_env(
     specs: list[str],
     json: bool = False,
@@ -89,4 +94,3 @@ def uninstall_specs_in_protected_env(
     ]
     process = run(cmd)
     return process.returncode
-

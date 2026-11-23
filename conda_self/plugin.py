@@ -6,8 +6,12 @@ from typing import TYPE_CHECKING
 
 from conda.common.configuration import PrimitiveParameter, SequenceParameter
 from conda.plugins.hookspec import hookimpl
-from conda.plugins.types import CondaHealthCheck, CondaSetting, CondaSubcommand, CondaPostSolve
-
+from conda.plugins.types import (
+    CondaHealthCheck,
+    CondaPostSolve,
+    CondaSetting,
+    CondaSubcommand,
+)
 
 from .cli import configure_parser, execute
 from .constants import PERMANENT_PACKAGES, SELF_PERMANENT_PACKAGES_SETTING

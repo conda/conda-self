@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import os
 import sys
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from conda.models.channel import Channel
 from conda.exceptions import CondaValueError
+from conda.models.channel import Channel
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
@@ -61,9 +60,7 @@ def channel_url_from_package_url(url: object) -> str | None:
     parts = split_conda_url_easy_parts(context.known_subdirs, raw_url)
     if not parts.scheme or not parts.hostname:
         return None
-    netloc = (
-        parts.hostname if parts.port is None else f"{parts.hostname}:{parts.port}"
-    )
+    netloc = parts.hostname if parts.port is None else f"{parts.hostname}:{parts.port}"
     path = parts.path or ""
     return f"{parts.scheme}://{netloc}{path}".rstrip("/")
 
