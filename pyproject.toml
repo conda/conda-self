@@ -120,7 +120,7 @@ sphinx-copybutton = "*"
 sphinx-design = "*"
 
 [tool.pixi.feature.test.tasks]
-install-self = { cmd = "python -m conda pypi install -e .", env = { CONDA_SOLVER = "libmamba" } }
+install-self = { cmd = "python -m conda pypi install --editable . --yes", env = { CONDA_SOLVER = "libmamba" } }
 test = { cmd = "python -m pytest --cov --cov-report=term-missing --cov-report=xml", depends-on = ["install-self"], env = { CONDA_SOLVER = "libmamba" } }
 coverage = { cmd = "python -m coverage html", depends-on = ["test"], description = "Run tests and generate an HTML coverage report" }
 coverage-serve = { cmd = "python -m http.server 0 --bind 127.0.0.1 --directory htmlcov", depends-on = ["coverage"], description = "Run tests and serve the HTML coverage report locally" }
