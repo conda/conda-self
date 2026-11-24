@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -12,13 +12,10 @@ if TYPE_CHECKING:
     import argparse
 
 
-class Snapshot(Enum):
+class Snapshot(StrEnum):
     """Snapshot modes accepted by ``conda self reset --snapshot``.
 
-    Plain :class:`enum.Enum` for Python 3.10 compatibility. The string values
-    double as argparse choices and user-facing mode names. Switch to
-    :class:`enum.StrEnum` when 3.11 becomes the minimum supported version
-    (mirrors the TODO on conda's ``EnvironmentFormat``).
+    The string values double as argparse choices and user-facing mode names.
     """
 
     CURRENT = "current"
@@ -26,9 +23,6 @@ class Snapshot(Enum):
     INSTALLER_EXACT = "installer-exact"
     INSTALLER_UPDATED = "installer-updated"
     BASE_PROTECTION = "base-protection"
-
-    def __str__(self) -> str:
-        return self.value
 
     @property
     def display_name(self) -> str:

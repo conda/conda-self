@@ -18,17 +18,17 @@ build:
 
 requirements:
   host:
-    - python 3.10
+    - python 3.11
     - pip
     - hatchling >=1.12.2
     - hatch-vcs >=0.2.0
   run:
-    - python >=3.10
+    - python >=3.11
     - conda >=26.1.1
 
 test:
   requires:
-    - python 3.10
+    - python 3.11
   imports:
     - conda_self
   commands:
