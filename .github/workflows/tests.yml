@@ -58,6 +58,10 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         channel: [defaults, conda-forge]
         python-version: ["311", "312", "313", "314", "315"]
+        exclude:
+          # conda has no Python 3.15 builds on defaults yet
+          - channel: defaults
+            python-version: "315"
         include:
           - os: macos-latest
             channel: defaults
@@ -65,16 +69,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Patch channels in pixi config
-        if: matrix.channel == 'defaults'
-        shell: bash
-        run: |
-          # Use defaults channel instead of conda-forge
-          sed -i.bak 's|channels = \["conda-forge"\]|channels = ["https://repo.anaconda.com/pkgs/main", "https://repo.anaconda.com/pkgs/r", "https://repo.anaconda.com/pkgs/msys2"]|g' pyproject.toml
-          rm pixi.lock
       - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
         with:
           environments: test-py${{ matrix.python-version }}
+      - name: Configure conda channels
+        shell: bash
+        run: |
+          echo "channels: [${{ matrix.channel }}]" > .pixi/envs/test-py${{ matrix.python-version }}/.condarc
       - name: Show conda info
         run: pixi run --environment test-py${{ matrix.python-version }} python -m conda info
       - name: Run tests
