@@ -34,6 +34,7 @@ def test_install_plugin_dry_run(
     conda_channel: str,
 ):
     monkeypatch.setenv("CONDA_CHANNELS", conda_channel)
+    monkeypatch.setenv("PYTHONFAULTHANDLER", "1")
     result = conda_cli_subprocess(
         sys.prefix,
         "self",
@@ -41,9 +42,11 @@ def test_install_plugin_dry_run(
         "--json",
         "--dry-run",
         "conda-libmamba-solver",
+        check=False,
         capture_output=True,
         text=True,
     )
+    assert result.returncode == 0, f"{result.stdout}\n{result.stderr}"
     assert json.loads(result.stdout)["success"]
 
 
