@@ -9,7 +9,7 @@ from conda.base.context import context
 from conda.core.prefix_data import PrefixData
 from conda.exceptions import CondaValueError
 from conda.models.match_spec import MatchSpec
-from conda.models.records import PackageRecord
+from conda.models.records import PackageRecord, PrefixRecord
 
 from conda_self.testing import conda_cli_subprocess
 
@@ -28,6 +28,67 @@ def test_help(conda_cli: CondaCLIFixture):
 
 def test_update_plugin_invalid(conda_cli: CondaCLIFixture):
     conda_cli("self", "update", "--plugin", "conda-fake-solver", raises=CondaValueError)
+
+
+@pytest.mark.parametrize(
+    "arguments,expected_names",
+    (
+        (("--plugin", "plugin-conda-package"), {"plugin-conda-package"}),
+        (("--all",), {"conda", "plugin-conda-package"}),
+        (("--plugin", "plugin-python-project"), None),
+        (("--plugin", "conda-self"), None),
+    ),
+)
+def test_update_uses_conda_package_names(
+    arguments: tuple[str, ...],
+    expected_names: set[str] | None,
+    conda_cli: CondaCLIFixture,
+    monkeypatch: MonkeyPatch,
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    metadata_dir = tmp_path / "conda-meta"
+    metadata_dir.mkdir()
+    (metadata_dir / "history").touch()
+    for name, distribution_name in (
+        ("conda", None),
+        ("conda-self", "conda_self"),
+        ("plugin-conda-package", "plugin-python-project"),
+    ):
+        files = ()
+        if distribution_name:
+            dist_info = tmp_path / "site-packages" / f"{distribution_name}.dist-info"
+            dist_info.mkdir(parents=True)
+            entry_points = dist_info / "entry_points.txt"
+            entry_points.write_text("[conda]\nexample = example:plugin\n")
+            (dist_info / "METADATA").write_text(
+                f"Metadata-Version: 2.1\nName: {distribution_name}\nVersion: 1.0\n"
+            )
+            files = (str(entry_points.relative_to(tmp_path)),)
+        record = PrefixRecord(
+            name=name,
+            version="1.0",
+            build="0",
+            build_number=0,
+            subdir="noarch",
+            files=files,
+        )
+        (metadata_dir / f"{name}-1.0-0.json").write_text(json.dumps(record.dump()))
+    monkeypatch.setattr(
+        type(context), "root_prefix", property(lambda self: str(tmp_path))
+    )
+    install = mocker.patch(
+        "conda_self.install.install_specs_in_protected_env", return_value=0
+    )
+
+    if expected_names is None:
+        conda_cli("self", "update", *arguments, raises=CondaValueError)
+        install.assert_not_called()
+    else:
+        conda_cli("self", "update", *arguments)
+        specs = install.call_args.kwargs["specs"]
+        assert {MatchSpec(spec).name for spec in specs} == expected_names
+        assert all(spec.endswith(">=1.0") for spec in specs)
 
 
 @pytest.mark.parametrize(
@@ -216,8 +277,8 @@ def test_update_specs_prevent_downgrades(
     }
     mocker.patch("conda.core.prefix_data.PrefixData.get", side_effect=records.get)
     mocker.patch(
-        "conda_self.validate.conda_plugin_packages",
-        return_value={"conda-libmamba-solver"},
+        "conda.plugins.subcommands.plugins.package_validation.get_installed_plugin_package_names",
+        return_value={"conda-libmamba-solver", "conda-self"},
     )
     install = mocker.patch(
         "conda_self.install.install_specs_in_protected_env", return_value=0

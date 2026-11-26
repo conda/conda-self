@@ -16,6 +16,7 @@ CONDARC_PERMANENT_PACKAGES = f"""\
 plugins:
   {SELF_PERMANENT_PACKAGES_SETTING}:
     - python
+    - not-installed
 """
 
 
@@ -62,6 +63,7 @@ def test_permanent_dependencies_with_setting(permanent_packages_condarc):
 
     assert set(PERMANENT_PACKAGES).issubset(must_keep)
     assert "python" in must_keep
+    assert "not-installed" not in must_keep
 
 
 def test_permanent_dependencies_setting_empty_by_default(self_plugin_manager):
@@ -115,7 +117,6 @@ def test_permanent_dependencies_preserves_plugins_and_their_dependencies(
 
     prefix = SimpleNamespace(prefix=str(tmp_path))
     monkeypatch.setattr("conda_self.query.sys", prefix)
-    monkeypatch.setattr("conda_self.package_info.sys", prefix)
 
     expected = {"conda", "conda-self", "conda-runtime"}
     if add_plugins:

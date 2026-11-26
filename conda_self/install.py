@@ -1,8 +1,5 @@
 import sys
-from importlib.util import find_spec
-from subprocess import PIPE, run
-
-from conda.base.context import context
+from subprocess import run
 
 
 def install_specs_in_protected_env(
@@ -27,19 +24,11 @@ def install_specs_in_protected_env(
     else:
         update_flag = "--update-specs"
 
-    # Older conda versions may lack the parent package or only provide list and info.
-    plugins = "conda.plugins.subcommands.plugins"
-    native_install = (
-        plugins_only and find_spec(plugins) and find_spec(f"{plugins}.install")
-    )
-    if native_install:
+    if plugins_only:
         install_command = ["plugins", "install", "-n", "base"]
     else:
-        install_command = ["install", f"--prefix={sys.prefix}"]
-        if hasattr(context, "protect_frozen_envs"):
-            install_command.append("--override-frozen")
+        install_command = ["install", f"--prefix={sys.prefix}", "--override-frozen"]
 
-    validate_after_install = plugins_only and not native_install and not dry_run
     cmd = [
         sys.executable,
         "-m",
@@ -56,55 +45,4 @@ def install_specs_in_protected_env(
         *(("--",) if plugins_only else ()),
         *specs,
     ]
-    # Hold legacy install JSON until validation and any rollback finish.
-    result = run(
-        cmd, stdout=PIPE if json and validate_after_install else None, text=True
-    )
-    if result.returncode == 0 and validate_after_install:
-        from conda.models.match_spec import MatchSpec
-
-        from .exceptions import NotAPluginError
-        from .validate import (
-            conda_plugin_packages,
-            normalize_plugin_name,
-            reload_plugin_packages,
-        )
-
-        reload_plugin_packages()
-        plugin_names = conda_plugin_packages()
-        invalid_names = [
-            spec.name
-            for spec in map(MatchSpec, specs)
-            if normalize_plugin_name(spec.name) not in plugin_names
-        ]
-        if invalid_names:
-            uninstall_specs_in_protected_env(invalid_names, quiet_on_success=json)
-            raise NotAPluginError(invalid_names)
-
-    if result.stdout is not None:
-        sys.stdout.write(result.stdout)
-    return result.returncode
-
-
-def uninstall_specs_in_protected_env(
-    specs: list[str],
-    json: bool = False,
-    yes: bool = True,
-    *,
-    quiet_on_success: bool = False,
-) -> int:
-    cmd = [
-        sys.executable,
-        "-m",
-        "conda",
-        "remove",
-        f"--prefix={sys.prefix}",
-        *(("--override-frozen",) if hasattr(context, "protect_frozen_envs") else ()),
-        *(("--json",) if json else ()),
-        *(("--yes",) if yes else ()),
-        *specs,
-    ]
-    result = run(cmd, stdout=PIPE if quiet_on_success else None, text=True)
-    if result.returncode and result.stdout:
-        sys.stderr.write(result.stdout)
-    return result.returncode
+    return run(cmd).returncode

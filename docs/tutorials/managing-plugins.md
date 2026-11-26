@@ -6,7 +6,7 @@ environment: installing, updating, and removing them.
 
 ## Prerequisites
 
-- conda 26.11.0 or later for native plugin installation
+- conda 26.11.0 or later and Python 3.11 or later
 - conda-self installed in base for the update and remove steps
 - Base environment protected (see {doc}`protecting-base`)
 
@@ -20,7 +20,7 @@ conda plugins install -n base conda-index
 
 Conda checks the freeze marker and verifies that the package provides a
 plugin before installing it. See the {doc}`../reference/cli` for freeze
-prompt details. On older conda versions, use `conda self install conda-index`.
+prompt details.
 
 :::{dropdown} Watch an installation with the older command
 ![Installing a plugin with conda self install](../../demos/install-plugin.gif)

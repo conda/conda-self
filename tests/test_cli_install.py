@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import json
 import sys
-from subprocess import PIPE, CompletedProcess
+from subprocess import CompletedProcess
 from typing import TYPE_CHECKING
 
 import pytest
 from conda.base.constants import PREFIX_FROZEN_FILE
 from conda.exceptions import CondaValueError
 
-from conda_self.exceptions import NotAPluginError
 from conda_self.testing import conda_cli_subprocess, is_installed
 
 if TYPE_CHECKING:
@@ -50,28 +49,12 @@ def test_install_plugin_dry_run(
     assert json.loads(result.stdout)["success"]
 
 
-@pytest.mark.parametrize(
-    ("has_plugins", "has_install"),
-    (
-        pytest.param(False, False, id="no-plugins-command"),
-        pytest.param(True, False, id="plugins-without-install"),
-        pytest.param(True, True, id="plugins-with-install"),
-    ),
-)
 def test_install_forwards_options(
-    has_plugins: bool,
-    has_install: bool,
     mocker: MockerFixture,
     conda_cli: CondaCLIFixture,
     monkeypatch: MonkeyPatch,
     tmp_path: Path,
 ):
-    plugins = "conda.plugins.subcommands.plugins"
-    modules = {plugins: object() if has_plugins else None}
-    if has_plugins:
-        modules[f"{plugins}.install"] = object() if has_install else None
-    # Looking up a child of a missing package must fail.
-    mocker.patch("conda_self.install.find_spec", side_effect=modules.__getitem__)
     monkeypatch.setenv("CONDA_PREFIX", str(tmp_path))
 
     def report_success(command: list[str], **kwargs) -> CompletedProcess[str]:
@@ -102,13 +85,9 @@ def test_install_forwards_options(
     assert json.loads(out) == {"success": True}
     run.assert_called_once()
     (command,) = run.call_args.args
-    if has_install:
-        invocation = ["plugins", "install", "-n", "base"]
-        assert "--override-frozen" not in command
-        assert f"--prefix={sys.prefix}" not in command
-    else:
-        invocation = ["install", f"--prefix={sys.prefix}"]
-        assert "--override-frozen" in command
+    invocation = ["plugins", "install", "-n", "base"]
+    assert "--override-frozen" not in command
+    assert f"--prefix={sys.prefix}" not in command
     assert command[: 3 + len(invocation)] == [
         sys.executable,
         "-m",
@@ -136,7 +115,6 @@ def test_native_install_preserves_prompt_and_exit_code(
     monkeypatch: MonkeyPatch,
     mocker: MockerFixture,
 ):
-    mocker.patch("conda_self.install.find_spec", return_value=object())
     monkeypatch.setenv("CONDA_ALWAYS_YES", "false")
     run = mocker.patch(
         "conda_self.install.run", return_value=CompletedProcess([], returncode)
@@ -149,49 +127,6 @@ def test_native_install_preserves_prompt_and_exit_code(
     assert command[3:7] == ["plugins", "install", "-n", "base"]
     assert "--override-frozen" not in command
     assert "--yes" not in command
-
-
-def test_failed_legacy_install_preserves_json_and_exit_code(
-    conda_cli: CondaCLIFixture,
-    mocker: MockerFixture,
-):
-    mocker.patch("conda_self.install.find_spec", return_value=None)
-    error = '{"error": "PackagesNotFoundError"}\n'
-    run = mocker.patch(
-        "conda_self.install.run", return_value=CompletedProcess([], 17, stdout=error)
-    )
-
-    out, _, code = conda_cli("self", "install", "--json", "missing-plugin")
-
-    assert code == 17
-    assert out == error
-    run.assert_called_once()
-
-
-def test_failed_legacy_rollback_reports_diagnostic_on_stderr(
-    conda_cli: CondaCLIFixture,
-    mocker: MockerFixture,
-):
-    mocker.patch("conda_self.install.find_spec", return_value=None)
-    mocker.patch("conda_self.validate.conda_plugin_packages", return_value=set())
-    diagnostic = "Cannot remove example-package\n"
-    run = mocker.patch(
-        "conda_self.install.run",
-        side_effect=[
-            CompletedProcess([], 0, stdout='{"success": true}\n'),
-            CompletedProcess([], 1, stdout=diagnostic),
-        ],
-    )
-
-    out, err, _ = conda_cli(
-        "self", "install", "--json", "example-package", raises=NotAPluginError
-    )
-
-    assert out == ""
-    assert diagnostic in err
-    install, rollback = run.call_args_list
-    assert install.kwargs["stdout"] == rollback.kwargs["stdout"] == PIPE
-    assert rollback.args[0][3] == "remove"
 
 
 @pytest.mark.parametrize(
@@ -224,15 +159,6 @@ def test_install_not_plugins(
 
     history = base_env / "conda-meta" / "history"
     before_install = history.read_bytes()
-    native_help = conda_cli_subprocess(
-        base_env,
-        "plugins",
-        "install",
-        "--help",
-        check=False,
-        capture_output=True,
-    )
-
     result = conda_cli_subprocess(
         base_env,
         "self",
@@ -246,11 +172,8 @@ def test_install_not_plugins(
     )
     assert result.returncode != 0
     error = json.loads(result.stdout)["error"] if "--json" in options else result.stderr
-    if native_help.returncode == 0:
-        assert "Not conda plugin packages" in error
-        assert history.read_bytes() == before_install
-    else:
-        assert "NotAPluginError" in error
+    assert "Not conda plugin packages" in error
+    assert history.read_bytes() == before_install
     for package_name in package_names:
         assert package_name in error
         assert not is_installed(base_env, package_name)
@@ -277,18 +200,14 @@ def test_install_plugin(
     marker.write_text(json.dumps({"message": "Frozen for maintenance"}))
 
     assert not is_installed(base_env, "conda-build")
-    native_help = conda_cli_subprocess(
-        base_env, "plugins", "install", "--help", capture_output=True, check=False
-    )
     args = ("self", "install", "--yes", "conda-build")
-    if native_help.returncode == 0:
-        result = conda_cli_subprocess(
-            base_env, *args, "--json", capture_output=True, text=True, check=False
-        )
-        assert result.returncode != 0
-        assert "Frozen for maintenance" in json.loads(result.stdout)["error"]
-        assert not is_installed(base_env, "conda-build")
-        marker.unlink()
+    result = conda_cli_subprocess(
+        base_env, *args, "--json", capture_output=True, text=True, check=False
+    )
+    assert result.returncode != 0
+    assert "Frozen for maintenance" in json.loads(result.stdout)["error"]
+    assert not is_installed(base_env, "conda-build")
+    marker.unlink()
 
     conda_cli_subprocess(base_env, *args)
     assert is_installed(base_env, "conda-build")

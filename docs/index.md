@@ -13,9 +13,8 @@ frozen so regular conda commands refuse to modify it unless
 
 ## Quick example
 
-The plugin installation command below requires conda 26.11.0 or later.
+Conda-self requires conda 26.11.0 or later and Python 3.11 or later.
 See the {doc}`reference/cli` for how conda handles a frozen base.
-On older conda versions, use `conda self install conda-index`.
 
 ```bash
 # Protect base if the installer hasn't already done so

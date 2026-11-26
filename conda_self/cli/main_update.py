@@ -37,16 +37,28 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
 def execute(args: argparse.Namespace) -> int:
     from conda.base.context import context
     from conda.core.prefix_data import PrefixData
-    from conda.exceptions import PackageNotInstalledError
+    from conda.exceptions import CondaValueError, PackageNotInstalledError
+    from conda.plugins.subcommands.plugins.package_validation import (
+        get_installed_plugin_package_names,
+        require_installed_plugin_specs,
+    )
 
     from ..install import install_specs_in_protected_env
-    from ..validate import conda_plugin_packages, validate_plugin_is_installed
 
     if args.plugin:
-        validate_plugin_is_installed(args.plugin)
+        if args.plugin == "conda-self":
+            raise CondaValueError("Use 'conda self update --all' to update conda-self.")
+        require_installed_plugin_specs(
+            [args.plugin], context.root_prefix, command="update"
+        )
         package_names = [args.plugin]
     elif args.all:
-        package_names = ["conda", *conda_plugin_packages()]
+        package_names = [
+            "conda",
+            *sorted(
+                get_installed_plugin_package_names(context.root_prefix) - {"conda-self"}
+            ),
+        ]
     else:
         package_names = ["conda"]
 

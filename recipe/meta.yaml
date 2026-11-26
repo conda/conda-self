@@ -24,7 +24,7 @@ requirements:
     - hatch-vcs >=0.2.0
   run:
     - python >=3.11
-    - conda >=26.1.1
+    - conda >=26.11.0.dev66
 
 test:
   requires:
