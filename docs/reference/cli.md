@@ -79,18 +79,24 @@ conda self remove conda-index
 
 ## self update
 
-Update conda, one conda plugin, or all packages in the base environment.
+Update conda and all installed conda plugins by default, or target conda or
+one conda plugin. Dependencies of the requested packages can also be updated.
 
 ```
-conda self update [--plugin NAME | --all] [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
+conda self update [--plugin NAME | --all | --conda-only] [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
 ```
 
 `--plugin`
 : Update a single installed conda plugin.
 
 `--all`
-: Update all installed packages in the base environment. Passes `--all` to
-  `conda install`.
+: Update conda and all installed conda plugins (the default).
+
+`--conda-only`
+: Update conda and its dependencies without targeting all conda plugins.
+  This preserves the previous default behavior, but does not freeze dependencies.
+
+`--plugin`, `--all`, and `--conda-only` are mutually exclusive.
 
 `--force-reinstall`
 : Uninstall and reinstall each requested package, even if it is already
@@ -103,19 +109,23 @@ conda self update [--plugin NAME | --all] [--force-reinstall] [--dry-run] [--yes
 : Skip confirmation prompts.
 
 ```bash
-# Update conda
+# Update conda and all installed conda plugins
 conda self update
+
+# Update conda and its dependencies
+conda self update --conda-only
 
 # Update a plugin
 conda self update --plugin conda-libmamba-solver
 
-# Update all installed packages
+# Explicitly request the default behavior
 conda self update --all
 ```
 
-Bare `conda self update` and `--plugin` use `conda install --update-deps`
-so conda can update dependencies of the requested package. `--all` uses
-`conda install --all` to update all installed packages.
+All modes use `conda install --update-deps` with the selected packages. The
+default and `--all` target conda and its installed plugins, not every package
+in the base environment. Unlike earlier versions, `--all` no longer passes
+`--all` to `conda install`. Dependencies can still change during the solve.
 
 ---
 
