@@ -28,11 +28,10 @@ conda doctor -n base base-protection --fix
 
 This does four things:
 
-1. Tries to save a snapshot of base in conda's explicit format
-2. Clones your current base environment to a new `default` environment
-3. Removes conda packages other than conda, conda-self, configured permanent
-   packages, their dependencies, and installed conda packages named in an
-   available installer snapshot
+1. Shows the full migration plan and saves a recovery snapshot after confirmation
+2. Clones base to `default` and removes the planned conda management packages
+3. Retains conda, its plugins, configured permanent packages, installer-snapshot
+   packages, and their dependencies in base
 4. Marks base as frozen so regular conda commands refuse to modify it unless
    `--override-frozen` is passed
 

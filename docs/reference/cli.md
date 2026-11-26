@@ -223,14 +223,15 @@ conda doctor -n base base-protection [--fix] [--dry-run]
 
 `--fix`
 : Enable base protection. This:
-  1. Attempts to save a snapshot to
-     `conda-meta/base-protection-state.explicit.txt`
-  2. Clones the current base environment to `default`
-  3. Removes conda packages not retained by base protection
-  4. Marks base as frozen with the `conda-meta/frozen` environment marker file
+  1. Shows both final package sets and all omissions before confirmation
+  2. Saves the recovery snapshot to `conda-meta/base-protection-state.explicit.txt`
+  3. Clones base to `default`, removes the planned packages, and checks the result
+  4. Resets base to conda, plugins, permanent and installer packages, and their dependencies
+  5. Marks base as frozen and sets the default activation environment
 
-Snapshot export can be skipped when base cannot be represented in conda's
-explicit format.
+Retained package versions and builds are unchanged. The plan is also displayed
+with `--quiet`. `--dry-run` displays the plan without creating environments or
+writing snapshots. A usable recovery snapshot is required.
 
 Without `--fix`, reports whether base is currently protected.
 
@@ -245,9 +246,10 @@ conda doctor -n base base-protection --fix
 conda doctor --list
 ```
 
-:::{warning}
-If your base environment contains external packages, such as packages installed
-with pip, `--fix` will warn you before proceeding. These packages are preserved
-in the cloned `default` environment but may no longer work in the reset base
-environment.
-:::
+External Python packages and untracked Python files are copied to `default`,
+with their existing libraries retained conservatively. Externally installed
+conda plugins, unresolved external import redirects, unreadable metadata, and
+external requirements on excluded packages stop migration before changes.
+Migration temporarily disables prefix-data interoperability and restores its
+previous setting afterward, including on cancellation or failure. See
+{doc}`../tutorials/protecting-base` for details and recovery after a failed reset.

@@ -1,0 +1,9 @@
+### Bug fixes
+
+* Plan base protection before confirmation, preserve installed package versions,
+  retain conda plugins in base, and exclude conda, plugins, and their exclusive
+  dependencies from the default environment. Show affected user packages and
+  verify the destination before resetting base (conda/conda#17016).
+* Reuse conda's native plugin detection and dependency graph, and scope
+  prefix-data interoperability changes to the migration. Requires conda 26.11.0
+  or later.

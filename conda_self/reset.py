@@ -14,16 +14,22 @@ from conda.core.link import PrefixSetup, UnlinkLinkTransaction
 from conda.core.package_cache_data import PackageCacheData
 from conda.core.prefix_data import PrefixData
 from conda.core.solve import diff_for_unlink_link_precs
-from conda.exceptions import ChecksumMismatchError, CondaSignalInterrupt, ParseError
+from conda.exceptions import (
+    ChecksumMismatchError,
+    CondaSignalInterrupt,
+    CondaValueError,
+    ParseError,
+)
 from conda.gateways.disk.read import compute_sum, yield_lines
 from conda.misc import _match_specs_from_explicit, get_package_records_from_explicit
 from conda.models.enums import NoarchType
-from conda.models.match_spec import MatchSpec
 from conda_package_handling.exceptions import InvalidArchiveError
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from pathlib import Path
 
+    from conda.models.match_spec import MatchSpec
     from conda.models.records import PackageRecord
 
 
@@ -154,23 +160,35 @@ def records_from_snapshot(
 
 
 def names_from_explicit(path: Path) -> set[str]:
-    """Extract package names from a CEP 23 explicit spec file without downloading.
+    """Read snapshot names with conda's explicit URL parser, without downloads."""
+    return {spec.name for spec in _match_specs_from_explicit(yield_lines(path))}
 
-    Parses each URL line with :class:`~conda.models.match_spec.MatchSpec`,
-    which reads ``name``/``version``/``build`` from the package filename and
-    strips any checksum fragment as a comment. No network access, unlike
-    :func:`conda.misc.get_package_records_from_explicit`.
-    """
-    return {
-        MatchSpec(line).name for line in yield_lines(path) if line != EXPLICIT_MARKER
+
+def verify_installed_records(
+    prefix: str | Path, expected_records: Iterable[PackageRecord]
+) -> None:
+    """Reject changes to installed package metadata before a migration writes files."""
+    expected = {record.name: record.dump() for record in expected_records}
+    actual = {
+        record.name: record.dump()
+        for record in PrefixData(prefix, interoperability=False).reload().iter_records()
     }
+    if actual != expected:
+        raise CondaValueError(
+            "Base changed after migration planning. No base packages were removed. "
+            "Run the command again to review a new plan."
+        )
 
 
 def reset(
     prefix: str = sys.prefix,
     uninstallable_packages: set[str] = set(),
     snapshot: Path | None = None,
+    *,
+    expected_records: tuple[PackageRecord, ...] | None = None,
 ):
+    if expected_records is not None:
+        verify_installed_records(prefix, expected_records)
     if snapshot:
         snapshot_content = list(yield_lines(snapshot))
         packages_in_reset_env, unresolved_specs = records_from_snapshot(
@@ -191,7 +209,12 @@ def reset(
                 )
             return
     else:
-        installed = sorted(PrefixData(prefix).iter_records(), key=lambda x: x.name)
+        installed = sorted(
+            expected_records
+            if expected_records is not None
+            else PrefixData(prefix).iter_records(),
+            key=lambda x: x.name,
+        )
         packages_to_remove = tuple(
             pkg for pkg in installed if pkg.name not in uninstallable_packages
         )

@@ -15,17 +15,20 @@ conda doctor -n base base-protection --fix
 
 This:
 
-1. **Attempts to save a snapshot** of base in conda's explicit format to
-   `conda-meta/base-protection-state.explicit.txt`. The file contains an
-   `@EXPLICIT` marker followed by complete package URLs. Protection continues
-   without the snapshot when base cannot be exported in this format
-2. **Clones** the current base to a `default` environment, preserving all your
-   packages for continued use
-3. **Removes conda packages** other than conda, conda-self, configured permanent
-   packages, their dependencies, and installed conda packages named in an
-   available installer snapshot
-4. **Marks** base as frozen by writing the `conda-meta/frozen` environment
-   marker file
+1. **Shows the migration plan** before confirmation, including exact package
+   versions, both final environments, and any user packages omitted from default
+2. **Saves a recovery snapshot** to `conda-meta/base-protection-state.explicit.txt`
+   before changing environments
+3. **Prepares default** by cloning base and removing conda, its plugins, affected
+   reverse dependencies, and dependencies used only by the management packages.
+   Retained packages keep their installed versions and builds
+4. **Resets base** to conda, conda-self, installed plugins, configured permanent
+   packages, installed installer-snapshot packages, and their current dependencies
+5. **Marks base as frozen** and selects default for automatic activation
+
+Migration stops before changing base if the recovery snapshot cannot be prepared
+or the destination does not match the plan. See {doc}`tutorials/protecting-base`
+for external-package handling and recovery.
 
 Regular conda commands refuse to modify the frozen base environment unless
 `--override-frozen` is passed. `conda self update` and `conda self remove` pass
@@ -82,8 +85,9 @@ apply.
 
 ## Snapshots and reset
 
-When base protection is enabled, conda-self tries to save a snapshot of the
-pre-protection state. When export succeeds, this snapshot can restore base:
+Before enabling base protection, conda-self saves a snapshot of the
+pre-protection state. Migration stops before changing environments if the
+snapshot cannot be prepared. Use this snapshot to restore base:
 
 ```bash
 conda self reset                              # auto-detect the reset mode
@@ -118,7 +122,7 @@ Snapshots are stored in conda's explicit format in `conda-meta/`. Each file
 contains an `@EXPLICIT` marker followed by complete package URLs:
 
 - `base-protection-state.explicit.txt` -- saved by
-  `conda doctor -n base base-protection --fix` when base can be exported
+  `conda doctor -n base base-protection --fix` before migration
 - `initial-state.explicit.txt` -- saved by the installer (if available)
 
 ## Health check integration
