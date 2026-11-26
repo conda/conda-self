@@ -1,26 +1,35 @@
 Source demos/_settings.tape
+Env TMPDIR "/tmp"
 
 Output demos/update.gif
+Output demos/update.mp4
 
 Hide
 Type `source demos/_setup.sh`
 Enter
 Wait /\$/
-# Install an older plugin so the update has something to upgrade
-# (use raw conda install to avoid pinning the version in history)
-Type `conda install --yes --quiet --override-frozen conda-index=0.6.0 2>&1 | tail -1`
+Type `conda self install --yes conda-spawn > "$DEMO_ROOT/prepare.log" 2>&1 || exit 1`
 Enter
-Wait /\$/
+Wait /\$$/
 Type "clear"
 Enter
 Wait /\$/
 Show
 
-Type "# Update all installed packages"
+Type "# Maintain this conda plugin in base"
 Enter
-Sleep 500ms
+Type@60ms "conda self update --plugin conda-spawn"
+Enter
+Wait /Proceed|\$$/
+Sleep 2s
+Enter
+Wait /\$$/
+Sleep 4s
 
-Type@80ms "conda self update --yes --all"
+Hide
+Type `conda spawn --help > "$DEMO_ROOT/plugin.log" || exit 1`
 Enter
-Wait /\$/
-Sleep 3s
+Wait /\$$/
+Type "exit"
+Enter
+Sleep 1s
