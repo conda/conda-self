@@ -21,9 +21,15 @@ def conda_cli_subprocess(prefix: str | Path, *args, **kwargs) -> CompletedProces
     else:
         python = prefix / "bin" / "python"
 
+    # Use the subprocess's own conda: the runner's PYTHONPATH breaks DLL loading.
+    env = dict(kwargs.pop("env", None) or os.environ)
+    for name in ("PYTHONPATH", "PYTHONHOME"):
+        env.pop(name, None)
+
     return run(
         [python, "-m", "conda", *args],
         check=kwargs.pop("check", True),
+        env=env,
         **kwargs,
     )
 

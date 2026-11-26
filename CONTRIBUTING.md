@@ -82,17 +82,17 @@ subprocesses, and write `coverage.xml` for Codecov.
 To run the tests and generate an HTML report in `htmlcov/`:
 
 ```bash
-pixi run -e test-py310 coverage
+pixi run -e test-py311 coverage
 ```
 
 To generate the report and serve it locally:
 
 ```bash
-pixi run -e test-py310 coverage-serve
+pixi run -e test-py311 coverage-serve
 ```
 
 Open the URL printed by the server and press `Ctrl+C` to stop it. The server
-listens on `127.0.0.1` and chooses an available port. Replace `test-py310` with
+listens on `127.0.0.1` and chooses an available port. Replace `test-py311` with
 another test environment to use a different Python version.
 
 The test workflow uploads coverage from each matrix job to Codecov. As in

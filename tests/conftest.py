@@ -53,15 +53,9 @@ def _session_env(
         "conda",
         "conda-self",
         "coverage >=7.13",
-        # Pin libmambapy <2.6 to work around a broken pybind11-abi==11
-        # variant on Windows. See conda-forge/mamba-feedstock#384.
-        "libmambapy <2.6",
         f"python={python_ver}",
         f"--channel={channel}",
     ) as prefix:
-        # Persist the pin so `conda self update` respects it too.
-        pinned = prefix / "conda-meta" / "pinned"
-        pinned.write_text("libmambapy <2.6\n")
         yield prefix
 
 
