@@ -122,11 +122,13 @@ downloaded and extracted before the failure may remain in a package cache.
 
 After resetting, your base environment contains the conda packages selected by
 the reset mode. [conda list](inv:conda:std:doc#commands/list) shows what is left
-in base. You may need to reinstall plugins:
+in base. With conda 26.11.0 or later, you can reinstall a plugin by name.
 
 ```bash
-conda self install conda-index
+conda plugins install -n base conda-index
 ```
+
+On older conda versions, use `conda self install conda-index`.
 
 Your `default` environment (created during base protection) is
 unaffected by resets.

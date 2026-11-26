@@ -28,7 +28,7 @@ This:
    marker file
 
 Regular conda commands refuse to modify the frozen base environment unless
-`--override-frozen` is passed. `conda self install`, `update`, and `remove` pass
+`--override-frozen` is passed. `conda self update` and `conda self remove` pass
 that option to conda.
 
 ### Checking protection status
@@ -41,28 +41,16 @@ This reports whether base is currently protected.
 
 ## Plugin management
 
-conda-self provides three commands for managing plugins in a protected
-base environment:
-
 ### Install
 
-![Install a plugin](../demos/install-plugin.gif)
+With conda 26.11.0 or later, use the native command to install plugins in base.
 
 ```bash
-conda self install conda-index
+conda plugins install -n base conda-index
 ```
 
-The install command:
-
-1. Runs `conda install` as a subprocess with `--override-frozen`
-2. After installation, scans `importlib.metadata` entry points for
-   the `conda` group
-3. If the installed package is not a valid
-   [conda plugin](inv:conda:std:doc#dev-guide/plugins/index), uninstalls it and
-   raises an error
-
-This removes the requested package when plugin validation fails. Packages
-installed as its dependencies may remain.
+If base is frozen, conda handles the freeze check. On older conda versions,
+use `conda self install conda-index`.
 
 ### Update
 
@@ -149,13 +137,11 @@ check appears alongside any other registered checks.
 
 ## Plugin validation
 
-When installing packages, conda-self validates that they are conda plugins by
-checking `importlib.metadata.entry_points(group="conda")`. For validation,
-conda-self compares package names case-insensitively and treats hyphens and
-underscores as equivalent.
-
-If a package is not a conda plugin, it is automatically uninstalled and a
-`NotAPluginError` is raised.
+On conda 26.11.0 or later, `conda plugins install` checks the requested
+packages before changing the environment. `conda self install` uses the same
+check when the native command is available. On older conda versions,
+conda-self checks entry points after installation and removes requested
+packages that lack a `conda` entry point. Their dependencies may remain.
 
 ## Permanent packages
 

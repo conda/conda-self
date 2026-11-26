@@ -21,7 +21,10 @@ if TYPE_CHECKING:
 BASE_PROTECTION_FROZEN_MESSAGE = """\
 Your base environment is protected from direct modifications.
 
-To manage conda and its plugins, use conda self:
+To install a plugin with conda 26.11 or later, run
+  conda plugins install -n base PACKAGE
+
+For other base maintenance commands, run
   conda self --help"""
 
 

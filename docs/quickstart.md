@@ -1,25 +1,27 @@
 # Quick start
 
-This guide walks you through protecting your base environment and
-managing plugins with conda-self.
+This guide uses native conda to install a plugin and conda-self to protect
+and maintain base.
 
 ## Prerequisites
 
-- conda 26.1.1 or later
-- conda-self installed in base (`conda install -n base conda-self`)
+- For native plugin installation, use conda 26.11.0 or later.
+- For the base-protection check, update, remove, and reset steps, use
+  conda-self installed in base with conda 26.1.1 or later.
 
 ## Protect your base environment
 
 ![Base protection demo](../demos/base-protection.gif)
 
-Using [conda doctor](inv:conda:std:doc#commands/doctor), check whether base is
-currently protected:
+If your installer already protected base, skip to {ref}`quickstart-install-plugin`.
+Otherwise, check whether base is protected with
+[conda doctor](inv:conda:std:doc#commands/doctor).
 
 ```bash
 conda doctor -n base base-protection
 ```
 
-If it is not, enable protection:
+For an unprotected base, enable protection with this command.
 
 ```bash
 conda doctor -n base base-protection --fix
@@ -35,23 +37,18 @@ This does four things:
 4. Marks base as frozen so regular conda commands refuse to modify it unless
    `--override-frozen` is passed
 
-:::{tip}
-You only need to run this once. After protection, use `conda self`
-commands to manage plugins in base.
-:::
-
+(quickstart-install-plugin)=
 ## Install a plugin
 
-![Install plugin demo](../demos/install-plugin.gif)
+With conda 26.11.0 or later, use the native command to install `conda-index`
+into base. Conda checks that the package provides a plugin before installing it.
 
 ```bash
-conda self install conda-index
+conda plugins install -n base conda-index
 ```
 
-conda-self installs the package via a subprocess and checks whether it registers
-as a [conda plugin](inv:conda:std:doc#dev-guide/plugins/index). If validation
-fails, conda-self uninstalls the requested package. Packages installed as its
-dependencies may remain.
+For frozen base, see the {doc}`reference/cli` for the prompt and version
+details. On older conda versions, use `conda self install conda-index`.
 
 ## Update all installed packages
 

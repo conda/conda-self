@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import argparse
 
-HELP = "Install conda plugins in the base environment."
+REPLACEMENT = "Use conda plugins install -n base with conda 26.11 or later."
+HELP = f"Install conda plugins in base (pending deprecation). {REPLACEMENT}"
 
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:
@@ -23,17 +24,19 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
 
 
 def execute(args: argparse.Namespace) -> int:
+    import warnings
+
     from conda.base.context import context
-    from conda.exceptions import CondaValueError, DryRunExit
+    from conda.exceptions import CondaValueError
     from conda.models.match_spec import MatchSpec
 
-    from ..exceptions import NotAPluginError
-    from ..install import (
-        install_specs_in_protected_env,
-        uninstall_specs_in_protected_env,
-    )
-    from ..validate import conda_plugin_packages, reload_plugin_packages
+    from ..install import install_specs_in_protected_env
 
+    warnings.warn(
+        f"conda self install is pending deprecation. {REPLACEMENT}",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
     specs_to_add = [MatchSpec(spec) for spec in args.specs]
 
     specs_with_channels = [str(s) for s in specs_to_add if s.get("channel")]
@@ -44,34 +47,17 @@ def execute(args: argparse.Namespace) -> int:
             "Configure channels via `conda config --add channels <channel>` instead."
         )
 
-    print("Installing packages:", *args.specs)
+    if not context.json and not context.quiet:
+        print("Installing packages:", *args.specs, flush=True)
 
-    returncode = install_specs_in_protected_env(
+    return install_specs_in_protected_env(
         args.specs,
+        plugins_only=True,
         force_reinstall=args.force_reinstall,
         dry_run=context.dry_run,
         json=context.json,
         yes=context.always_yes,
+        quiet=context.quiet,
+        console=args.console,
+        verbosity=context.verbosity,
     )
-
-    if returncode != 0:
-        return returncode
-
-    if context.dry_run:
-        raise DryRunExit()
-
-    reload_plugin_packages()
-
-    plugin_names = conda_plugin_packages()
-    spec_names = [spec.name for spec in specs_to_add]
-    invalid_names = [
-        name
-        for name in spec_names
-        if name.lower().replace("_", "-") not in plugin_names
-    ]
-
-    if invalid_names:
-        uninstall_specs_in_protected_env(invalid_names, yes=True)
-        raise NotAPluginError(invalid_names)
-
-    return 0

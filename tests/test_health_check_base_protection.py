@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from conda.base.constants import PREFIX_FROZEN_FILE
+from conda.base.context import context
 from conda.core.prefix_data import PrefixData
 from conda.exceptions import (
     CondaOSError,
@@ -101,7 +102,7 @@ def fixable_base_env(
     def fake_get_exporter(fmt):
         raise CondaValueError("no exporter")
 
-    monkeypatch.setattr("conda.base.context.context.quiet", True, raising=False)
+    monkeypatch.setitem(vars(context), "quiet", True)
     monkeypatch.setattr(
         "conda.base.context.context.plugin_manager.get_environment_exporter_by_format",
         fake_get_exporter,
@@ -453,14 +454,12 @@ def test_fix_without_exportable_snapshot(
     capsys: CaptureFixture,
     quiet: bool,
 ):
-    from conda.base.context import context
-
     env = Environment.from_prefix(
         str(base_protection_env), name="base", platform=context.subdir
     )
     env.external_packages = {"pip": ["external-package==1.0"]}
     monkeypatch.setattr(Environment, "from_prefix", lambda *args, **kwargs: env)
-    monkeypatch.setattr(context, "quiet", quiet)
+    monkeypatch.setitem(vars(context), "quiet", quiet)
 
     def clone(*args, **kwargs):
         print("Cloning packages")
@@ -497,7 +496,7 @@ def test_fix_without_exportable_snapshot(
 
     assert frozen_message == base_protection.BASE_PROTECTION_FROZEN_MESSAGE
     assert "conda self --help" in rendered_error
-    assert "--override-frozen" in rendered_error
+    assert "conda plugins install -n base PACKAGE" in rendered_error
 
 
 def test_health_check_registered():

@@ -6,26 +6,30 @@ environment: installing, updating, and removing them.
 
 ## Prerequisites
 
-- conda-self installed in base (`conda install -n base conda-self`)
+- conda 26.11.0 or later for native plugin installation
+- conda-self installed in base for the update and remove steps
 - Base environment protected (see {doc}`protecting-base`)
 
 ## Install a plugin
 
-![Install plugin demo](../../demos/install-plugin.gif)
+Target base by name, even if another environment is active.
 
 ```bash
-conda self install conda-index
+conda plugins install -n base conda-index
 ```
 
-conda-self runs [conda install](inv:conda:std:doc#commands/install) as a subprocess with
-`--override-frozen`, then validates that the installed package is
-a real conda plugin by checking its entry points. If validation
-fails, the package is automatically uninstalled.
+Conda checks the freeze marker and verifies that the package provides a
+plugin before installing it. See the {doc}`../reference/cli` for freeze
+prompt details. On older conda versions, use `conda self install conda-index`.
+
+:::{dropdown} Watch an installation with the older command
+![Installing a plugin with conda self install](../../demos/install-plugin.gif)
+:::
 
 ### Multiple plugins at once
 
 ```bash
-conda self install conda-index conda-spawn
+conda plugins install -n base conda-index conda-spawn
 ```
 
 ## Update plugins
@@ -80,12 +84,12 @@ before installing. To install plugins from a custom channel:
 conda config --add channels my-channel -n base
 
 # Then install
-conda self install my-plugin
+conda plugins install -n base my-plugin
 ```
 
-Channel-qualified package specs (`conda-forge::my-plugin`) are not supported
-and will produce an error. This keeps channel configuration consistent across
-all operations.
+Configuring the channel also makes it available to later updates. The older
+`conda self install` command rejects channel-qualified package specs such as
+`conda-forge::my-plugin`.
 
 ## Next steps
 

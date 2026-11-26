@@ -6,7 +6,26 @@ All commands are available as `conda self <cmd>`.
 
 ## self install
 
-Install conda plugins in the base environment.
+`conda self install` is pending deprecation in conda-self 0.4.0. With conda
+26.11.0 or later, install plugins in base with the native command. The
+explicit environment name targets base even when another environment is active.
+
+```bash
+conda plugins install -n base conda-index
+```
+
+A plugin installation can also change dependencies in base. If base is frozen,
+conda versions with the interactive freeze prompt show the reason and ask for
+permission to proceed. Press Enter to decline. Versions without the prompt
+report a frozen-environment error. See
+[conda/conda#17013](https://github.com/conda/conda/pull/17013).
+
+During the deprecation period, existing `conda self install` calls still
+target the running conda installation. The wrapper leaves the freeze check
+to `conda plugins install` when available. On older versions it passes the
+freeze override to `conda install` when supported, then checks for a `conda`
+entry point after installation and removes requested packages that fail the
+check. Their dependencies may remain installed.
 
 ```
 conda self install <specs>... [--force-reinstall] [--dry-run] [--yes] [--json] [--quiet]
@@ -23,7 +42,8 @@ conda self install <specs>... [--force-reinstall] [--dry-run] [--yes] [--json] [
 : Show what would be installed without making changes.
 
 `--yes`
-: Skip confirmation prompts.
+: Skip the package transaction prompt. If base is frozen, a native plugin
+  install with `--yes` exits with a freeze error.
 
 `--json`
 : Output in JSON format.
@@ -31,17 +51,16 @@ conda self install <specs>... [--force-reinstall] [--dry-run] [--yes] [--json] [
 `--quiet`
 : Suppress non-essential output.
 
-```bash
-# Install a plugin
-conda self install conda-index
+### Deprecation schedule
 
-# Force reinstall
-conda self install --force-reinstall conda-index
-```
-
-After installation, conda-self validates that the package registers a `conda`
-entry point. If it does not, the package is automatically uninstalled and a
-`NotAPluginError` is raised.
+The notice period starts when conda-self 0.4.0 ships, after conda 26.11.0.
+During this period Python hides the `PendingDeprecationWarning` by default.
+Once at least four months and two regular conda releases have passed, a March
+or September conda-self release can begin warning on each use. The following
+March or September is the earliest removal window. The preceding conda-self
+release will announce the removal, and the release that removes the command
+will require conda 26.11.0 or later.
+See [CEP 9](https://conda.org/learn/ceps/cep-0009/).
 
 ---
 
