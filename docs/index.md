@@ -1,104 +1,81 @@
 # conda-self
 
-Manage conda and its plugins in the `base` environment.
+Maintain conda itself, separately from the Python and packages you use for
+your work.
 
-conda-self provides commands to install, update, and remove
-[conda plugins](inv:conda:std:doc#dev-guide/plugins/index)
-in a protected base environment. It integrates with
-[conda doctor](inv:conda:std:doc#commands/doctor) to set up base
-protection -- cloning your current base to a `default` environment,
-removing conda packages not retained by base protection, and marking it as
-frozen so regular conda commands refuse to modify it unless
-`--override-frozen` is passed.
+Conda-self provides commands for updating conda and managing its extensions,
+called plugins. It also helps protect the `base` environment where conda is
+installed from accidental changes.
 
-## Quick example
+You do not need conda-self to create an environment or start using Python.
+If you are new to conda, begin with its
+[getting-started guide](inv:conda:std:doc#user-guide/getting-started).
 
-![Protect base, install a plugin, update, reset](../demos/quickstart.gif)
+## Install
+
+Use conda 26.1.1 or later and a configured channel providing conda-self:
 
 ```bash
-# Protect your base environment
-$ conda doctor -n base base-protection --fix
-
-# Install a plugin safely
-$ conda self install conda-index
-
-# Update all installed packages
-$ conda self update --all
-
-# Remove a plugin
-$ conda self remove conda-index
-
-# Reset base if things go wrong
-$ conda self reset
+conda install -n base conda-self
 ```
 
-## What it does
+Installation does not automatically protect base or move packages. If you
+already use base for your work, read {doc}`tutorials/protecting-base` before
+enabling protection.
 
-`conda self` keeps your base environment minimal and stable:
+## Project packages and conda maintenance
 
-1. **Base protection** -- `conda doctor -n base base-protection --fix` clones
-   base to `default`, removes conda packages not retained by base protection,
-   and marks it as frozen
-2. **Plugin management** -- `conda self install`, `update`, and `remove`
-   use `--override-frozen` to manage plugins through subprocess calls that
-   respect all of conda's safety checks
-3. **Reset** -- `conda self reset` restores base from an installer or
-   base-protection snapshot, or removes conda packages not retained by `current`
+Use regular conda commands to install Python and packages in a working
+environment. Use `conda self` to maintain conda and its plugins in base.
+`conda self install` is not a replacement for `conda install`.
 
-## Navigation
+![Create a working environment, use NumPy, and update conda separately](../demos/quickstart.gif)
 
-:::::::{grid} 1 1 2 2
+{download}`Watch the MP4 recording <../demos/quickstart.mp4>` or follow the
+copyable commands in the {doc}`quickstart` tutorial.
+
+## Find your next step
+
+::::::{grid} 1 1 2 2
 :gutter: 3
 
-::::::{grid-item-card} {octicon}`rocket;1em` Getting started
-:link: quickstart
-:link-type: doc
-
-Protect your base environment and manage plugins in under a minute.
-::::::
-
-::::::{grid-item-card} {octicon}`mortar-board;1em` Tutorials
+:::::{grid-item-card} Tutorials
 :link: tutorials/index
 :link-type: doc
 
-Step-by-step guides for protecting base, managing plugins, and more.
-::::::
+Learn to maintain conda separately from your work, then try a conda plugin.
+:::::
 
-::::::{grid-item-card} {octicon}`star;1em` Features
-:link: features
+:::::{grid-item-card} How-to guides
+:link: tutorials/protecting-base
 :link-type: doc
 
-Base protection, plugin validation, snapshots, and health checks.
-::::::
+Protect an existing base environment and continue using your packages.
+:::::
 
-::::::{grid-item-card} {octicon}`gear;1em` Configuration
-:link: configuration
-:link-type: doc
-
-Settings, snapshot files, and environment variables.
-::::::
-
-::::::{grid-item-card} {octicon}`terminal;1em` CLI reference
+:::::{grid-item-card} Reference
 :link: reference/cli
 :link-type: doc
 
-Every `conda self` subcommand and `conda doctor` integration.
-::::::
+Look up command options, exact behavior, settings, and limitations.
+:::::
 
-::::::{grid-item-card} {octicon}`light-bulb;1em` Motivation
+:::::{grid-item-card} Explanation
 :link: motivation
 :link-type: doc
 
-Why conda-self exists and how it keeps base safe.
+Understand base, working environments, plugins, and the reasons for protection.
+:::::
+
 ::::::
 
-:::::::
+For other maintenance tasks, see {doc}`guides/custom-channels` and
+{doc}`guides/resetting-base`. These are not prerequisites for getting started.
 
 ```{toctree}
 :hidden:
 :caption: Tutorials
 
-quickstart
 tutorials/index
 ```
 
@@ -122,8 +99,8 @@ configuration
 :hidden:
 :caption: Explanation
 
-features
 motivation
+features
 ```
 
 ```{toctree}
