@@ -13,14 +13,14 @@ cd conda-self
 ```
 4. Run the help message.
 ```
-pixi run conda self --help
+pixi run -e dev conda self --help
 ```
 
 We _could_ just use the default pixi env to try things, but it doesn't write a good `history` file, so `conda self` will misunderstand what to do and remove everything sometimes. For now, let's use this default conda to create a demo environment to do things with:
 
 1. Create a demo environment with `conda` and `pip`.
 ```
-pixi run conda create -p .pixi/envs/demo conda pip
+pixi run -e dev conda create -p .pixi/envs/demo "conda>=26.10.0" pip
 ```
 2. `conda-spawn` is included in the pixi configuration, which you can use to pseudo-activate the environment:
 ```
@@ -30,8 +30,9 @@ If not, simply activate the environment.
 ```
 conda activate .pixi/envs/demo
 ```
-3. Install `conda-self` in it.
+3. Install the pinned conda package built by the Pixi task, then `conda-self`.
 ```
+conda install --yes .pixi/conda-source/dev/noarch/conda-26.11.0.dev66-pypi_0.conda
 pip install -e .
 ```
 4. Play with `python -m conda self`.
@@ -39,6 +40,14 @@ pip install -e .
    2. `python -m conda self install numpy`
    3. `python -m conda self install conda-rich`
    4. `python -m conda self remove conda-rich`
+
+The Pixi tasks build a pinned conda source revision, convert it to a conda
+package, and install it with package records intact. It contains the native
+plugin package APIs planned for conda 26.11.0 and works on Python 3.11 through
+3.15 without interpreter-specific canary packages. Use the tasks rather than
+calling an environment's Python directly before setup. The package build indexes
+that same conda package in a local channel so the recipe tests run against the
+required conda APIs before the final release.
 
 ### Included Tasks
 
@@ -101,6 +110,9 @@ comments are disabled.
 
 ## With `conda` only
 
+This setup requires the final conda 26.11.0 release. Until it is available,
+use the Pixi setup above.
+
 1. Fork and clone this repository.
 ```
 git clone https://github.com/conda/conda-self
@@ -110,9 +122,9 @@ git clone https://github.com/conda/conda-self
 cd conda-self
 ```
 
-3. Create a `conda` environment with `python` and `pip` in it.
+3. Create an environment with Python 3.11 or later and the conda dependencies.
 ```
-conda create -n conda-self-dev python pip
+conda create -n conda-self-dev "python>=3.11" "conda>=26.11.0" pip
 ```
 4. Activate the environment and install `conda self`.
 ```

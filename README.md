@@ -2,6 +2,9 @@
 
 Commands to manage your `base` environment safely.
 
+Requires Python 3.11 or later and conda 26.11.0 or later. Until conda 26.11.0
+is released, development installs the pinned conda source revision in `pyproject.toml`.
+
 ## `conda self`
 
 Manage conda and its plugins in the base environment.

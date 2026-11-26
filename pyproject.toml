@@ -21,7 +21,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy"
 ]
 dependencies = [
-  # "conda >=26.1.1",  # not on PyPI, installed via conda
+  # "conda >=26.11.0.dev66",  # not on PyPI, installed via conda
 ]
 dynamic = ["version"]
 
@@ -88,10 +88,16 @@ platforms = ["linux-64", "osx-arm64", "win-64"]
 
 [tool.pixi.dependencies]
 python = ">=3.11"
-conda = ">=26.1.1"
+# Bootstrap the pinned conda source below until conda 26.11.0 is released.
+conda = ">=26.10.0"
+conda-pypi = ">=0.13.0"
+pip = "*"
 
 [tool.pixi.tasks]
-conda = { cmd = "python -m conda", env = { CONDA_CHANNELS = "conda-forge" } }
+build-conda = "python -m pip wheel --no-deps --wheel-dir .pixi/conda-source/$PIXI_ENVIRONMENT_NAME https://github.com/conda/conda/archive/bdbad6818c317c7559c06da70923e268a4eacd44.tar.gz#sha256=83ed2056a20895fa45c8e4402269d32c1c1221d9a23d47b3eadd9ddda1f7f6a7"
+convert-conda = { cmd = "rm -f .pixi/conda-source/$PIXI_ENVIRONMENT_NAME/noarch/conda-26.11.0.dev66-pypi_0.conda && python -m conda pypi convert --output-folder .pixi/conda-source/$PIXI_ENVIRONMENT_NAME/noarch .pixi/conda-source/$PIXI_ENVIRONMENT_NAME/conda-26.11.0.dev66-py3-none-any.whl", depends-on = ["build-conda"] }
+install-conda = { cmd = "python -m conda install --yes --no-deps .pixi/conda-source/$PIXI_ENVIRONMENT_NAME/noarch/conda-26.11.0.dev66-pypi_0.conda", depends-on = ["convert-conda"], env = { CONDA_SOLVER = "libmamba" } }
+conda = { cmd = "python -m conda", depends-on = ["install-conda"], env = { CONDA_CHANNELS = "conda-forge" } }
 
 [tool.pixi.tasks.demos]
 cmd = """bash -c 'if [ -n "$1" ]; then vhs "demos/$1.tape"; else for tape in demos/*.tape; do [[ "$(basename "$tape")" == _* ]] && continue; vhs "$tape"; done; fi' -- {{ name }}"""
@@ -100,14 +106,17 @@ description = "Record demo GIFs"
 
 [tool.pixi.feature.build]
 dependencies = { conda-build = "*", anaconda-client = "*" }
-tasks = { build = "conda build recipe" }
+
+[tool.pixi.feature.build.tasks]
+index-conda = { cmd = "python -m conda_index .pixi/conda-source/$PIXI_ENVIRONMENT_NAME", depends-on = ["convert-conda"] }
+build = { cmd = "conda build recipe --channel ./.pixi/conda-source/$PIXI_ENVIRONMENT_NAME", depends-on = ["index-conda"] }
 
 [tool.pixi.feature.docs]
 channels = [
   "conda-forge",  # Force it for docs, not available in defaults
 ]
 [tool.pixi.feature.docs.tasks]
-docs = { cmd = "python -m sphinx.cmd.build -M dirhtml . _build", cwd = "docs" }
+docs = { cmd = "python -m sphinx.cmd.build -M dirhtml . _build", cwd = "docs", depends-on = ["install-conda"] }
 serve = { cmd = "python -m http.server", cwd = "docs/_build/dirhtml" }
 clean = { cmd = "rm -rf _build", cwd = "docs" }
 
@@ -120,7 +129,7 @@ sphinx-copybutton = "*"
 sphinx-design = "*"
 
 [tool.pixi.feature.test.tasks]
-install-self = { cmd = "python -m conda pypi install --editable . --yes", env = { CONDA_SOLVER = "libmamba" } }
+install-self = { cmd = "python -m conda pypi install --editable . --yes", depends-on = ["install-conda"], env = { CONDA_SOLVER = "libmamba" } }
 test = { cmd = "python -m pytest --cov --cov-report=term-missing --cov-report=xml", depends-on = ["install-self"], env = { CONDA_SOLVER = "libmamba" } }
 coverage = { cmd = "python -m coverage html", depends-on = ["test"], description = "Run tests and generate an HTML coverage report" }
 coverage-serve = { cmd = "python -m http.server 0 --bind 127.0.0.1 --directory htmlcov", depends-on = ["coverage"], description = "Run tests and serve the HTML coverage report locally" }
@@ -129,7 +138,6 @@ lint = 'pre-commit'
 
 [tool.pixi.feature.test]
 [tool.pixi.feature.test.dependencies]
-conda-pypi = "*"
 coverage = ">=7.13"
 editables = "*"
 hatch-vcs = ">=0.2.0"
@@ -145,17 +153,19 @@ channels = [
 ]
 
 [tool.pixi.feature.typecheck.dependencies]
-# Conda 26.5 corrected the subcommand and test fixture annotations used here.
-conda = ">=26.5"
 pytest = "*"
 pytest-mock = "*"
 ty = "==0.0.78"
 
 [tool.pixi.feature.typecheck.tasks]
-typecheck = "ty check"
+typecheck = { cmd = "ty check", depends-on = ["install-conda"] }
 
 [tool.pixi.feature.py311.dependencies]
 python = "3.11.*"
+
+[tool.pixi.feature.py311.activation.env]
+# Avoid native shutdown crashes under coverage's C tracer on Python 3.11.
+COVERAGE_CORE = "pytrace"
 
 [tool.pixi.feature.py312.dependencies]
 python = "3.12.*"

@@ -5,9 +5,8 @@ and maintain base.
 
 ## Prerequisites
 
-- For native plugin installation, use conda 26.11.0 or later.
-- For the base-protection check, update, remove, and reset steps, use
-  conda-self installed in base with conda 26.1.1 or later.
+- Use conda 26.11.0 or later and Python 3.11 or later.
+- Install conda-self in base.
 
 ## Protect your base environment
 
@@ -48,7 +47,7 @@ conda plugins install -n base conda-index
 ```
 
 For frozen base, see the {doc}`reference/cli` for the prompt and version
-details. On older conda versions, use `conda self install conda-index`.
+details.
 
 ## Update all installed packages
 

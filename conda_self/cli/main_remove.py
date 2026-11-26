@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from subprocess import run
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -32,7 +33,6 @@ def execute(args: argparse.Namespace) -> int:
     from conda.reporters import confirm_yn
 
     from ..exceptions import PluginRemoveError
-    from ..install import uninstall_specs_in_protected_env
     from ..query import permanent_dependencies
 
     uninstallable_packages = permanent_dependencies(add_plugins=False)
@@ -56,5 +56,16 @@ def execute(args: argparse.Namespace) -> int:
         dry_run=context.dry_run,
     )
 
-    uninstall_specs_in_protected_env(args.specs, json=context.json, yes=True)
-    return 0
+    return run(
+        [
+            sys.executable,
+            "-m",
+            "conda",
+            "remove",
+            f"--prefix={sys.prefix}",
+            "--override-frozen",
+            *(("--json",) if context.json else ()),
+            "--yes",
+            *args.specs,
+        ]
+    ).returncode
